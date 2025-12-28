@@ -289,7 +289,7 @@ export default function LoginPage() {
                                     transition={{ duration: 0.8, delay: 1 }}
                                     className="text-center text-white/60 text-sm"
                                 >
-                                    Don't have an account?{' '}
+                                    Don&apos;t have an account?{' '}
                                     <a href="#" className="text-[#a60054] hover:text-[#c91069] font-medium transition-colors">
                                         Sign up
                                     </a>
