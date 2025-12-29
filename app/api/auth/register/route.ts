@@ -5,6 +5,11 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
+interface ValidationError {
+  errors: Record<string, { message: string }>;
+  name: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
@@ -93,11 +98,12 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Registration error:', error);
 
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((err: any) => err.message);
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError') {
+      const validationError = error as ValidationError;
+      const messages = Object.values(validationError.errors).map((err) => err.message);
       return NextResponse.json(
         { 
           success: false, 

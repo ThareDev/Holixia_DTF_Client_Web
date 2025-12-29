@@ -15,7 +15,7 @@ interface IUserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-type UserModel = Model<IUser, {}, IUserMethods>;
+type UserModel = Model<IUser, Record<string, never>, IUserMethods>;
 
 const UserSchema = new Schema<IUser, UserModel, IUserMethods>(
   {
