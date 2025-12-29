@@ -1,18 +1,26 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import logo from '@/public/img/logo1.png'
-
+import { useState, useEffect, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { RootState } from '@/store/store';
+import { logout } from '@/store/slices/authSlice';
+import { showConfirmAlert } from '@/lib/utils/sweetAlert';
+import logo from '@/public/img/logo1.png';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { scrollY } = useScroll();
-  const navbarOpacity = useTransform(scrollY, [0, 100], [0.8, 1]);
-  const navbarBlur = useTransform(scrollY, [0, 100], [10, 20]);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,15 +31,52 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProfileMenuOpen]);
+
   const scrollToSection = (sectionId: string) => {
     setIsMobileMenuOpen(false);
-    // Wait for menu to close before scrolling
     setTimeout(() => {
       const element = document.getElementById(sectionId);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 300);
+  };
+
+  const handleLogout = async () => {
+    const result = await showConfirmAlert(
+      'Are you sure you want to logout?',
+      'Logout',
+      'Yes, Logout',
+      'Cancel'
+    );
+
+    if (result.isConfirmed) {
+      dispatch(logout());
+      setIsProfileMenuOpen(false);
+      router.push('/');
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -65,7 +110,6 @@ export default function Navbar() {
                 whileHover={{ rotate: 5 }}
                 transition={{ duration: 0.3 }}
               >
-                {/* If you have a logo image, use this: */}
                 <Image
                   src={logo}
                   alt="Holixia Logo"
@@ -73,8 +117,6 @@ export default function Navbar() {
                   height={40}
                   className="object-contain"
                 />
-
-                {/* Animated background glow */}
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-br from-[#c91069] to-[#2d2a80] opacity-0"
                   animate={{ opacity: [0, 0.3, 0] }}
@@ -102,7 +144,7 @@ export default function Navbar() {
               { label: 'Home', href: '/', section: null },
               { label: 'Services', href: '/#services', section: 'services' },
               { label: 'Contact', href: '/#contact', section: 'contact' },
-            ].map((link, index) => (
+            ].map((link) => (
               <motion.div key={link.label} whileHover={{ y: -2 }} whileTap={{ y: 0 }}>
                 {link.section ? (
                   <button
@@ -110,9 +152,7 @@ export default function Navbar() {
                     className="relative px-4 lg:px-6 py-2.5 text-sm lg:text-base text-white/80 hover:text-white transition-colors font-medium group"
                   >
                     {link.label}
-                    <motion.span
-                      className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#a60054] to-[#211f60] group-hover:w-full transition-all duration-300"
-                    />
+                    <motion.span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#a60054] to-[#211f60] group-hover:w-full transition-all duration-300" />
                   </button>
                 ) : (
                   <Link
@@ -120,59 +160,154 @@ export default function Navbar() {
                     className="relative px-4 lg:px-6 py-2.5 text-sm lg:text-base text-white/80 hover:text-white transition-colors font-medium group"
                   >
                     {link.label}
-                    <motion.span
-                      className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#a60054] to-[#211f60] group-hover:w-full transition-all duration-300"
-                    />
+                    <motion.span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#a60054] to-[#211f60] group-hover:w-full transition-all duration-300" />
                   </Link>
                 )}
               </motion.div>
             ))}
           </motion.div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons / Profile */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
             className="flex items-center gap-2 sm:gap-3"
           >
-            {/* Sign In Button */}
-            <Link href="/login">
-              <motion.button
-                className="hidden sm:block px-4 lg:px-6 py-2 lg:py-2.5 text-sm lg:text-base text-white/80 hover:text-white transition-colors font-medium"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Sign In
-              </motion.button>
-            </Link>
+            {isAuthenticated && user ? (
+              // Profile Section
+              <div className="relative" ref={profileMenuRef}>
+                <motion.button
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                  className="flex items-center gap-2 sm:gap-3 cursor-pointer"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {/* Profile Avatar */}
+                  <motion.div
+                    className="relative w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-[#a60054] to-[#211f60] rounded-full flex items-center justify-center shadow-lg border-2 border-white/20"
+                    whileHover={{ borderColor: 'rgba(255, 255, 255, 0.4)' }}
+                  >
+                    <span className="text-white font-semibold text-sm sm:text-base">
+                      {getInitials(user.fullName)}
+                    </span>
+                    <motion.div
+                      className="absolute inset-0 rounded-full bg-gradient-to-br from-[#c91069] to-[#2d2a80] opacity-0"
+                      animate={{ opacity: [0, 0.3, 0] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    />
+                  </motion.div>
 
-            {/* Get Started Button */}
-            <Link href="/register">
-              <motion.button
-                className="relative px-4 sm:px-6 py-2 sm:py-2.5 text-sm lg:text-base bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-lg shadow-lg overflow-hidden group"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-[#211f60] to-[#a60054] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                />
-                <span className="relative z-10">Get Started</span>
+                  {/* User Name (Desktop only) */}
+                  <div className="hidden lg:flex flex-col items-start">
+                    <span className="text-white text-sm font-medium">{user.fullName.split(' ')[0]}</span>
+                    <span className="text-white/60 text-xs">View Profile</span>
+                  </div>
 
-                {/* Animated shine effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                  animate={{
-                    x: ['-100%', '200%'],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: 'linear',
-                  }}
-                />
-              </motion.button>
-            </Link>
+                  {/* Dropdown Icon */}
+                  <motion.svg
+                    className="hidden sm:block w-4 h-4 text-white/60"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    animate={{ rotate: isProfileMenuOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </motion.svg>
+                </motion.button>
+
+                {/* Profile Dropdown Menu */}
+                <AnimatePresence>
+                  {isProfileMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-3 w-64 bg-[#0a0015]/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/10 overflow-hidden"
+                    >
+                      {/* User Info Header */}
+                      <div className="px-4 py-4 border-b border-white/10 bg-gradient-to-br from-[#a60054]/20 to-[#211f60]/20">
+                        <p className="text-white font-semibold text-sm">{user.fullName}</p>
+                        <p className="text-white/60 text-xs mt-1">{user.email}</p>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="py-2">
+                        <Link href="/profile" onClick={() => setIsProfileMenuOpen(false)}>
+                          <motion.button
+                            className="w-full px-4 py-3 text-left text-white/80 hover:text-white hover:bg-white/5 transition-all flex items-center gap-3"
+                            whileHover={{ x: 5 }}
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span className="text-sm font-medium">My Profile</span>
+                          </motion.button>
+                        </Link>
+
+                        <Link href="/dashboard" onClick={() => setIsProfileMenuOpen(false)}>
+                          <motion.button
+                            className="w-full px-4 py-3 text-left text-white/80 hover:text-white hover:bg-white/5 transition-all flex items-center gap-3"
+                            whileHover={{ x: 5 }}
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                            </svg>
+                            <span className="text-sm font-medium">Dashboard</span>
+                          </motion.button>
+                        </Link>
+
+                        <div className="border-t border-white/10 my-2"></div>
+
+                        <motion.button
+                          onClick={handleLogout}
+                          className="w-full px-4 py-3 text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all flex items-center gap-3"
+                          whileHover={{ x: 5 }}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          <span className="text-sm font-medium">Logout</span>
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              // Auth Buttons (Not logged in)
+              <>
+                <Link href="/login">
+                  <motion.button
+                    className="hidden sm:block px-4 lg:px-6 py-2 lg:py-2.5 text-sm lg:text-base text-white/80 hover:text-white transition-colors font-medium"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Sign In
+                  </motion.button>
+                </Link>
+
+                <Link href="/register">
+                  <motion.button
+                    className="relative px-4 sm:px-6 py-2 sm:py-2.5 text-sm lg:text-base bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-lg shadow-lg overflow-hidden group"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-[#211f60] to-[#a60054] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    />
+                    <span className="relative z-10">Get Started</span>
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                      animate={{ x: ['-100%', '200%'] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                    />
+                  </motion.button>
+                </Link>
+              </>
+            )}
 
             {/* Mobile Menu Button */}
             <motion.button
@@ -180,26 +315,11 @@ export default function Navbar() {
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {isMobileMenuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                 )}
               </svg>
             </motion.button>
@@ -209,9 +329,7 @@ export default function Navbar() {
         {/* Bottom border with gradient */}
         <motion.div
           className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
-          animate={{
-            opacity: isScrolled ? 1 : 0.5,
-          }}
+          animate={{ opacity: isScrolled ? 1 : 0.5 }}
           transition={{ duration: 0.3 }}
         />
 
@@ -221,19 +339,9 @@ export default function Navbar() {
             <motion.div
               key={i}
               className="absolute w-1 h-1 bg-white/30 rounded-full"
-              style={{
-                left: `${20 + i * 30}%`,
-                top: '50%',
-              }}
-              animate={{
-                y: [0, -10, 0],
-                opacity: [0.3, 0.6, 0.3],
-              }}
-              transition={{
-                duration: 2 + i,
-                repeat: Infinity,
-                delay: i * 0.5,
-              }}
+              style={{ left: `${20 + i * 30}%`, top: '50%' }}
+              animate={{ y: [0, -10, 0], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 2 + i, repeat: Infinity, delay: i * 0.5 }}
             />
           ))}
         </div>
@@ -279,18 +387,45 @@ export default function Navbar() {
                 )}
               </div>
             ))}
-            
+
             <div className="border-t border-white/10 pt-4 space-y-3">
-              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                <button className="block w-full px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all text-left">
-                  Sign In
-                </button>
-              </Link>
-              <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                <button className="block w-full px-4 py-3 bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-lg">
-                  Get Started
-                </button>
-              </Link>
+              {isAuthenticated && user ? (
+                <>
+                  <div className="px-4 py-3 bg-gradient-to-br from-[#a60054]/20 to-[#211f60]/20 rounded-lg border border-white/10">
+                    <p className="text-white font-semibold text-sm">{user.fullName}</p>
+                    <p className="text-white/60 text-xs mt-1">{user.email}</p>
+                  </div>
+                  <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                    <button className="block w-full px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all text-left">
+                      My Profile
+                    </button>
+                  </Link>
+                  <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                    <button className="block w-full px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all text-left">
+                      Dashboard
+                    </button>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all text-left"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <button className="block w-full px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all text-left">
+                      Sign In
+                    </button>
+                  </Link>
+                  <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                    <button className="block w-full px-4 py-3 bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-lg">
+                      Get Started
+                    </button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

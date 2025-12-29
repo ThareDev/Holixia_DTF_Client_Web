@@ -2,16 +2,24 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { loginSuccess, setLoading } from '@/store/slices/authSlice';
+import { showSuccessAlert, showErrorAlert, showLoadingAlert, closeAlert } from '@/lib/utils/sweetAlert';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
+    
+    const router = useRouter();
+    const dispatch = useDispatch();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
+        
+        showLoadingAlert('Signing you in...');
+        dispatch(setLoading(true));
 
         try {
             const response = await fetch('/api/auth/login', {
@@ -23,19 +31,29 @@ export default function LoginPage() {
             });
 
             const data = await response.json();
+            closeAlert();
 
-            if (response.ok) {
-                // Handle successful login
-                console.log('Login successful:', data);
-                // Redirect or update auth state
+            if (response.ok && data.success) {
+                dispatch(loginSuccess({
+                    user: data.data.user,
+                    token: data.data.token,
+                }));
+                
+                await showSuccessAlert(
+                    'You have successfully logged in!',
+                    'Welcome Back!'
+                );
+                
+                router.push('/');
             } else {
-                // Handle error
-                console.error('Login failed:', data.message);
+                showErrorAlert(data.message || 'Login failed', 'Authentication Error');
             }
         } catch (error) {
+            closeAlert();
             console.error('Login error:', error);
+            showErrorAlert('An unexpected error occurred. Please try again.', 'Connection Error');
         } finally {
-            setIsLoading(false);
+            dispatch(setLoading(false));
         }
     };
 
@@ -257,28 +275,14 @@ export default function LoginPage() {
                                 >
                                     <motion.button
                                         type="submit"
-                                        disabled={isLoading}
-                                        className="w-full py-4 bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-xl shadow-lg relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
-                                        whileHover={{ scale: isLoading ? 1 : 1.02 }}
-                                        whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                                        className="w-full py-4 bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-xl shadow-lg relative overflow-hidden group"
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
                                     >
                                         <motion.div
                                             className="absolute inset-0 bg-gradient-to-r from-[#211f60] to-[#a60054] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                                         />
-                                        <span className="relative z-10 flex items-center justify-center gap-2">
-                                            {isLoading ? (
-                                                <>
-                                                    <motion.div
-                                                        className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                                                        animate={{ rotate: 360 }}
-                                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                                    />
-                                                    Signing in...
-                                                </>
-                                            ) : (
-                                                'Sign In'
-                                            )}
-                                        </span>
+                                        <span className="relative z-10">Sign In</span>
                                     </motion.button>
                                 </motion.div>
 
@@ -290,7 +294,7 @@ export default function LoginPage() {
                                     className="text-center text-white/60 text-sm"
                                 >
                                     Don&apos;t have an account?{' '}
-                                    <a href="#" className="text-[#a60054] hover:text-[#c91069] font-medium transition-colors">
+                                    <a href="/register" className="text-[#a60054] hover:text-[#c91069] font-medium transition-colors">
                                         Sign up
                                     </a>
                                 </motion.p>
