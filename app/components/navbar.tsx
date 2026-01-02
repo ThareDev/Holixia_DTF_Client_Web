@@ -13,10 +13,13 @@ import logo from '@/public/img/logo1.png';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { scrollY } = useScroll();
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   
   const dispatch = useDispatch();
   const router = useRouter();
@@ -24,11 +27,43 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      const currentScrollY = window.scrollY;
+      
+      // Determine if scrolled past threshold
+      setIsScrolled(currentScrollY > 20);
+      
+      // Show/hide navbar based on scroll direction
+      if (currentScrollY < 10) {
+        // Always show navbar at top of page
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        // Scrolling down - hide navbar
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY.current) {
+        // Scrolling up - show navbar
+        setIsVisible(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
+      
+      // Clear existing timeout
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+      
+      // Show navbar after user stops scrolling for 150ms
+      scrollTimeout.current = setTimeout(() => {
+        setIsVisible(true);
+      }, 150);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+    };
   }, []);
 
   // Close profile menu when clicking outside
@@ -89,9 +124,15 @@ export default function Navbar() {
             : 'rgba(10, 0, 21, 0.8)',
           backdropFilter: `blur(${isScrolled ? '20px' : '10px'})`,
         }}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        initial={{ y: 0 }}
+        animate={{ 
+          y: isVisible ? 0 : -100,
+          opacity: isVisible ? 1 : 0
+        }}
+        transition={{ 
+          duration: 0.3, 
+          ease: 'easeInOut' 
+        }}
       >
         <div
           className={`max-w-7xl mx-auto flex items-center justify-between transition-all duration-300 ${
@@ -354,6 +395,7 @@ export default function Navbar() {
         animate={{
           opacity: isMobileMenuOpen ? 1 : 0,
           height: isMobileMenuOpen ? 'auto' : 0,
+          y: isVisible ? 0 : -100,
         }}
         transition={{ duration: 0.3 }}
         style={{
