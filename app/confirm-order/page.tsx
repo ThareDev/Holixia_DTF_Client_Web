@@ -19,7 +19,6 @@ export default function ConfirmationPage() {
   const { items: orderItems, totalAmount } = useSelector((state: RootState) => state.order);
   const { 
     deliveryInfo, 
-    paymentInfo,
     orderId,
     orderDate,
     isDeliveryInfoComplete,
@@ -157,10 +156,10 @@ export default function ConfirmationPage() {
             Order Confirmed!
           </h1>
           <p className="text-lg text-white/70 mb-2">
-            Thank you for your order. We've received your payment receipt.
+            Thank you for your order. We&apos;ve received your payment receipt.
           </p>
           <p className="text-white/60">
-            We'll verify your payment and start processing your order shortly.
+            We&apos;ll verify your payment and start processing your order shortly.
           </p>
         </motion.div>
 
@@ -214,7 +213,7 @@ export default function ConfirmationPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-white font-semibold">Payment Verification</p>
-                  <p className="text-white/60 text-sm">We're verifying your payment receipt</p>
+                  <p className="text-white/60 text-sm">We&apos;re verifying your payment receipt</p>
                 </div>
               </div>
 
@@ -362,9 +361,9 @@ export default function ConfirmationPage() {
             <div className="flex-1">
               <p className="text-blue-400 font-semibold mb-2">What happens next?</p>
               <ul className="text-blue-300/70 text-sm space-y-1">
-                <li>• We'll verify your payment within 1-2 hours</li>
-                <li>• Once verified, we'll start printing your designs</li>
-                <li>• You'll receive a confirmation call before delivery</li>
+                <li>• We&apos;ll verify your payment within 1-2 hours</li>
+                <li>• Once verified, we&apos;ll start printing your designs</li>
+                <li>• You&apos;ll receive a confirmation call before delivery</li>
                 <li>• Expected delivery: 3-5 business days</li>
               </ul>
             </div>

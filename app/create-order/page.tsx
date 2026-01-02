@@ -574,7 +574,7 @@ export default function CreateOrderPage() {
 
                             {orderItems.length > 0 && (
                                 <p className="text-xs text-white/60 text-center mt-4">
-                                    Review your order before submitting. We'll contact you with payment details.
+                                    Review your order before submitting. We&apos;ll contact you with payment details.
                                 </p>
                             )}
                         </motion.div>
