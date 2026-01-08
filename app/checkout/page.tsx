@@ -11,7 +11,7 @@ import { setDeliveryInfo, nextStep } from '@/store/slices/checkoutSlice';
 export default function CheckoutPage() {
   const dispatch = useDispatch();
   const router = useRouter();
-  
+
   // Get order items from Redux
   const { items: orderItems, totalAmount } = useSelector((state: RootState) => state.order);
   const { deliveryInfo } = useSelector((state: RootState) => state.checkout);
@@ -143,33 +143,35 @@ export default function CheckoutPage() {
           transition={{ delay: 0.1 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-2 sm:gap-4">
             {/* Step 1 - Active */}
             <div className="flex items-center">
-              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#a60054] to-[#211f60] rounded-full text-white font-bold">
+              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-[#a60054] to-[#211f60] rounded-full text-white font-bold text-sm sm:text-base">
                 1
               </div>
-              <span className="ml-2 text-white font-semibold">Delivery Info</span>
+              <span className="ml-1 sm:ml-2 text-white font-semibold text-xs sm:text-base hidden xs:inline">Delivery</span>
+              <span className="ml-1 sm:ml-2 text-white font-semibold text-xs sm:text-base xs:hidden">Info</span>
             </div>
 
-            <div className="w-16 h-0.5 bg-white/20"></div>
+            <div className="w-8 sm:w-16 h-0.5 bg-white/20"></div>
 
             {/* Step 2 - Inactive */}
             <div className="flex items-center">
-              <div className="flex items-center justify-center w-10 h-10 bg-white/10 border-2 border-white/20 rounded-full text-white/50 font-bold">
+              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-white/10 border-2 border-white/20 rounded-full text-white/50 font-bold text-sm sm:text-base">
                 2
               </div>
-              <span className="ml-2 text-white/50 font-semibold">Payment</span>
+              <span className="ml-1 sm:ml-2 text-white/50 font-semibold text-xs sm:text-base">Payment</span>
             </div>
 
-            <div className="w-16 h-0.5 bg-white/20"></div>
+            <div className="w-8 sm:w-16 h-0.5 bg-white/20"></div>
 
             {/* Step 3 - Inactive */}
             <div className="flex items-center">
-              <div className="flex items-center justify-center w-10 h-10 bg-white/10 border-2 border-white/20 rounded-full text-white/50 font-bold">
+              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-white/10 border-2 border-white/20 rounded-full text-white/50 font-bold text-sm sm:text-base">
                 3
               </div>
-              <span className="ml-2 text-white/50 font-semibold">Confirmation</span>
+              <span className="ml-1 sm:ml-2 text-white/50 font-semibold text-xs sm:text-base hidden xs:inline">Confirmation</span>
+              <span className="ml-1 sm:ml-2 text-white/50 font-semibold text-xs sm:text-base xs:hidden">Confirm</span>
             </div>
           </div>
         </motion.div>
@@ -195,9 +197,8 @@ export default function CheckoutPage() {
                     type="text"
                     value={formData.fullName}
                     onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    className={`w-full px-4 py-3 bg-white/5 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#a60054] transition-all ${
-                      errors.fullName ? 'border-red-500' : 'border-white/20'
-                    }`}
+                    className={`w-full px-4 py-3 bg-white/5 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#a60054] transition-all ${errors.fullName ? 'border-red-500' : 'border-white/20'
+                      }`}
                     placeholder="Enter your full name"
                   />
                   {errors.fullName && (
@@ -220,9 +221,8 @@ export default function CheckoutPage() {
                     value={formData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
                     rows={4}
-                    className={`w-full px-4 py-3 bg-white/5 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#a60054] transition-all resize-none ${
-                      errors.address ? 'border-red-500' : 'border-white/20'
-                    }`}
+                    className={`w-full px-4 py-3 bg-white/5 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#a60054] transition-all resize-none ${errors.address ? 'border-red-500' : 'border-white/20'
+                      }`}
                     placeholder="Enter your complete delivery address"
                   />
                   {errors.address && (
@@ -247,9 +247,8 @@ export default function CheckoutPage() {
                       type="tel"
                       value={formData.contact1}
                       onChange={(e) => handleInputChange('contact1', e.target.value)}
-                      className={`w-full px-4 py-3 bg-white/5 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#a60054] transition-all ${
-                        errors.contact1 ? 'border-red-500' : 'border-white/20'
-                      }`}
+                      className={`w-full px-4 py-3 bg-white/5 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#a60054] transition-all ${errors.contact1 ? 'border-red-500' : 'border-white/20'
+                        }`}
                       placeholder="07X XXX XXXX"
                     />
                     {errors.contact1 && (
@@ -272,9 +271,8 @@ export default function CheckoutPage() {
                       type="tel"
                       value={formData.contact2}
                       onChange={(e) => handleInputChange('contact2', e.target.value)}
-                      className={`w-full px-4 py-3 bg-white/5 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#a60054] transition-all ${
-                        errors.contact2 ? 'border-red-500' : 'border-white/20'
-                      }`}
+                      className={`w-full px-4 py-3 bg-white/5 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#a60054] transition-all ${errors.contact2 ? 'border-red-500' : 'border-white/20'
+                        }`}
                       placeholder="07X XXX XXXX"
                     />
                     {errors.contact2 && (

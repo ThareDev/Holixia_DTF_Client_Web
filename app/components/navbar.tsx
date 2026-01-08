@@ -101,7 +101,7 @@ export default function Navbar() {
     if (result.isConfirmed) {
       dispatch(logout());
       setIsProfileMenuOpen(false);
-      router.push('/');
+      router.push('/login');
     }
   };
 
@@ -296,7 +296,7 @@ export default function Navbar() {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                             </svg>
-                            <span className="text-sm font-medium">Dashboard</span>
+                            <span className="text-sm font-medium">My Orders</span>
                           </motion.button>
                         </Link>
 
@@ -444,7 +444,7 @@ export default function Navbar() {
                   </Link>
                   <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
                     <button className="block w-full px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all text-left">
-                      Dashboard
+                      My Orders
                     </button>
                   </Link>
                   <button

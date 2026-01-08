@@ -3,9 +3,19 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
+
+// Add this interface for the Redux state
+interface RootState {
+  auth: {
+    isAuthenticated: boolean;
+    user: any;
+  };
+}
 
 export default function Home() {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
   const FEATURES = [
     {
@@ -157,7 +167,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start"
             >
-              <Link href="/register">
+              <Link href={isAuthenticated ? "/create-order" : "/register"}>
                 <motion.button
                   className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold text-sm sm:text-base rounded-xl shadow-lg relative overflow-hidden group"
                   whileHover={{ scale: 1.05 }}
@@ -167,7 +177,7 @@ export default function Home() {
                     className="absolute inset-0 bg-gradient-to-r from-[#211f60] to-[#a60054] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   />
                   <span className="relative z-10 flex items-center justify-center gap-2">
-                    Get Started
+                    {isAuthenticated ? 'Upload Now' : 'Get Started'}
                     <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -230,7 +240,7 @@ export default function Home() {
                   ease: "easeInOut"
                 }}
               />
-              
+
               {/* Central card */}
               <motion.div
                 className="relative z-10 w-60 h-60 sm:w-72 sm:h-72 md:w-80 md:h-80 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl flex items-center justify-center"
@@ -577,41 +587,43 @@ export default function Home() {
       </div>
 
       {/* CTA Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        viewport={{ once: true }}
-        className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24"
-      >
-        <div className="bg-gradient-to-br from-[#a60054] to-[#211f60] rounded-2xl sm:rounded-3xl p-8 sm:p-12 md:p-16 text-center relative overflow-hidden">
-          {/* Decorative elements */}
-          <div className="absolute top-0 left-0 w-48 h-48 sm:w-64 sm:h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-white/10 rounded-full blur-3xl" />
+      {!isAuthenticated && (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24"
+        >
+          <div className="bg-gradient-to-br from-[#a60054] to-[#211f60] rounded-2xl sm:rounded-3xl p-8 sm:p-12 md:p-16 text-center relative overflow-hidden">
+            {/* Decorative elements */}
+            <div className="absolute top-0 left-0 w-48 h-48 sm:w-64 sm:h-64 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-white/10 rounded-full blur-3xl" />
 
-          <div className="relative z-10">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Ready to Bring Your Designs to Life?
-            </h2>
-            <p className="text-base sm:text-lg md:text-xl text-white/90 mb-8 sm:mb-10 max-w-2xl mx-auto">
-              Join Holixia today and experience the future of DTF printing. Upload your first design and see the difference.
-            </p>
+            <div className="relative z-10">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Ready to Bring Your Designs to Life?
+              </h2>
+              <p className="text-base sm:text-lg md:text-xl text-white/90 mb-8 sm:mb-10 max-w-2xl mx-auto">
+                Join Holixia today and experience the future of DTF printing. Upload your first design and see the difference.
+              </p>
 
-            <Link href="/register">
-              <motion.button
-                className="inline-flex items-center gap-2 sm:gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-white text-[#a60054] font-bold text-base sm:text-lg rounded-xl shadow-2xl hover:shadow-3xl transition-all"
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Create Free Account
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </motion.button>
-            </Link>
+              <Link href="/register">
+                <motion.button
+                  className="inline-flex items-center gap-2 sm:gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-white text-[#a60054] font-bold text-base sm:text-lg rounded-xl shadow-2xl hover:shadow-3xl transition-all"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Create Free Account
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </motion.button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </main>
   );
 }

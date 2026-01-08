@@ -9,11 +9,13 @@ import { RootState } from '@/store/store';
 import { setPaymentInfo, confirmOrder } from '@/store/slices/checkoutSlice';
 import { clearOrder } from '@/store/slices/orderSlice';
 import { showSuccessAlert, showErrorAlert, showLoadingAlert, closeAlert } from '@/lib/utils/sweetAlert';
+import { useOrderFiles } from '@/lib/contexts/OrderFilesContext';
 
 export default function PaymentPage() {
   const dispatch = useDispatch();
   const router = useRouter();
-  
+  const { getFile, getAllFiles, clearAllFiles } = useOrderFiles();
+
   const { items: orderItems, totalAmount } = useSelector((state: RootState) => state.order);
   const { deliveryInfo, isDeliveryInfoComplete } = useSelector((state: RootState) => state.checkout);
   const { token } = useSelector((state: RootState) => state.auth);
@@ -55,12 +57,12 @@ export default function PaymentPage() {
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    
+
     if (!file.type.startsWith('image/')) {
       showErrorAlert('Please select an image file', 'Invalid File Type');
       return;
     }
-    
+
     if (file.size > 10 * 1024 * 1024) {
       showErrorAlert('File is too large. Maximum file size is 10MB', 'File Too Large');
       return;
@@ -107,18 +109,11 @@ export default function PaymentPage() {
       return;
     }
 
-    if (!token) {
-      showErrorAlert('Please login to continue', 'Authentication Required');
-      router.push('/login');
-      return;
-    }
-
     showLoadingAlert('Submitting your order...');
 
     try {
-      // Prepare form data
       const formData = new FormData();
-      
+
       // Add delivery info
       formData.append('deliveryInfo.fullName', deliveryInfo.fullName);
       formData.append('deliveryInfo.address', deliveryInfo.address);
@@ -130,7 +125,7 @@ export default function PaymentPage() {
       // Add payment receipt
       formData.append('paymentReceipt', receiptFile);
 
-      // Add order items data (without File objects)
+      // Add order items metadata
       const itemsData = orderItems.map(item => ({
         fileName: item.fileName,
         fileSize: item.fileSize,
@@ -141,14 +136,16 @@ export default function PaymentPage() {
       }));
       formData.append('items', JSON.stringify(itemsData));
 
-      // Add actual image files
+      // ✅ Add actual image files from context
       orderItems.forEach((item, index) => {
-        if (item.image) {
-          formData.append(`itemImage_${index}`, item.image);
+        const file = getFile(item.id);
+        if (file) {
+          formData.append(`itemImage_${index}`, file);
+        } else {
+          throw new Error(`Missing file for item: ${item.fileName}`);
         }
       });
 
-      // Submit order
       const response = await fetch('/api/order/create', {
         method: 'POST',
         headers: {
@@ -161,10 +158,7 @@ export default function PaymentPage() {
       closeAlert();
 
       if (response.ok && data.success) {
-        // Save order ID to Redux
         dispatch(confirmOrder());
-        
-        // Save payment info
         dispatch(setPaymentInfo({
           receiptImage: receiptFile,
           receiptPreview: receiptImage,
@@ -173,23 +167,25 @@ export default function PaymentPage() {
           paymentDate: new Date().toISOString(),
         }));
 
+        // ✅ Clear files after successful submission
+        clearAllFiles();
+
         await showSuccessAlert(
-          'Your order has been submitted successfully! We will verify your payment shortly.',
+          'Your order has been submitted successfully!',
           'Order Submitted!'
         );
 
-        // Navigate to confirmation
         router.push('/confirm-order');
-
-
       } else {
         showErrorAlert(data.message || 'Failed to submit order', 'Submission Failed');
       }
-
     } catch (error) {
       closeAlert();
       console.error('Order submission error:', error);
-      showErrorAlert('An unexpected error occurred. Please try again.', 'Submission Error');
+      showErrorAlert(
+        error instanceof Error ? error.message : 'An unexpected error occurred',
+        'Submission Error'
+      );
     }
   };
 
@@ -238,32 +234,37 @@ export default function PaymentPage() {
           transition={{ delay: 0.1 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-2 sm:gap-4">
+            {/* Step 1 - Completed */}
             <div className="flex items-center">
-              <div className="flex items-center justify-center w-10 h-10 bg-green-500 rounded-full text-white font-bold">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-green-500 rounded-full text-white font-bold">
+                <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <span className="ml-2 text-white font-semibold">Delivery Info</span>
+              <span className="ml-1 sm:ml-2 text-white font-semibold text-xs sm:text-base hidden xs:inline">Delivery</span>
+              <span className="ml-1 sm:ml-2 text-white font-semibold text-xs sm:text-base xs:hidden">Info</span>
             </div>
 
-            <div className="w-16 h-0.5 bg-green-500"></div>
+            <div className="w-8 sm:w-16 h-0.5 bg-green-500"></div>
 
+            {/* Step 2 - Active */}
             <div className="flex items-center">
-              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#a60054] to-[#211f60] rounded-full text-white font-bold">
+              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-[#a60054] to-[#211f60] rounded-full text-white font-bold text-sm sm:text-base">
                 2
               </div>
-              <span className="ml-2 text-white font-semibold">Payment</span>
+              <span className="ml-1 sm:ml-2 text-white font-semibold text-xs sm:text-base">Payment</span>
             </div>
 
-            <div className="w-16 h-0.5 bg-white/20"></div>
+            <div className="w-8 sm:w-16 h-0.5 bg-white/20"></div>
 
+            {/* Step 3 - Inactive */}
             <div className="flex items-center">
-              <div className="flex items-center justify-center w-10 h-10 bg-white/10 border-2 border-white/20 rounded-full text-white/50 font-bold">
+              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-white/10 border-2 border-white/20 rounded-full text-white/50 font-bold text-sm sm:text-base">
                 3
               </div>
-              <span className="ml-2 text-white/50 font-semibold">Confirmation</span>
+              <span className="ml-1 sm:ml-2 text-white/50 font-semibold text-xs sm:text-base hidden xs:inline">Confirmation</span>
+              <span className="ml-1 sm:ml-2 text-white/50 font-semibold text-xs sm:text-base xs:hidden">Confirm</span>
             </div>
           </div>
         </motion.div>
@@ -385,11 +386,10 @@ export default function PaymentPage() {
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
-                  className={`relative border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all duration-300 ${
-                    isDragging
-                      ? 'border-[#a60054] bg-[#a60054]/10'
-                      : 'border-white/20 hover:border-white/40'
-                  }`}
+                  className={`relative border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all duration-300 ${isDragging
+                    ? 'border-[#a60054] bg-[#a60054]/10'
+                    : 'border-white/20 hover:border-white/40'
+                    }`}
                 >
                   <input
                     ref={fileInputRef}
@@ -440,7 +440,7 @@ export default function PaymentPage() {
                         sizes="(max-width: 768px) 100vw, 66vw"
                       />
                     </div>
-                    
+
                     <div className="absolute top-4 left-4 px-3 py-1.5 bg-green-500 rounded-lg text-white text-sm font-semibold shadow-lg flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />

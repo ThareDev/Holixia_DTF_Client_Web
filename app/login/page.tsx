@@ -11,13 +11,13 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
-    
+
     const router = useRouter();
     const dispatch = useDispatch();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         showLoadingAlert('Signing you in...');
         dispatch(setLoading(true));
 
@@ -38,13 +38,18 @@ export default function LoginPage() {
                     user: data.data.user,
                     token: data.data.token,
                 }));
-                
+
                 await showSuccessAlert(
                     'You have successfully logged in!',
                     'Welcome Back!'
                 );
-                
-                router.push('/');
+
+                // Redirect based on user type
+                if (data.data.user.userType === 'admin') {
+                    router.push('/admin-panel/orders');
+                } else {
+                    router.push('/');
+                }
             } else {
                 showErrorAlert(data.message || 'Login failed', 'Authentication Error');
             }
@@ -56,6 +61,7 @@ export default function LoginPage() {
             dispatch(setLoading(false));
         }
     };
+
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#0a0015] via-[#211f60] to-[#0a0015] p-4 overflow-hidden relative">

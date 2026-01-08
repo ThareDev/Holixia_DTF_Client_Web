@@ -5,6 +5,7 @@ interface User {
   fullName: string;
   email: string;
   contactNumber: string;
+  userType: 'customer' | 'admin';
 }
 
 interface AuthState {

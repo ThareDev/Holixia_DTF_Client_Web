@@ -4,7 +4,9 @@ import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { ThemeInit } from "../.flowbite-react/init";
 import ConditionalLayout from "@/app/conditionallayout";
 import { Providers } from "./providers";
+import AuthProvider from "./authProvider";
 import "./globals.css";
+import { OrderFilesProvider } from '@/lib/contexts/OrderFilesContext';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -49,7 +51,11 @@ export default function RootLayout({
       >
         <ThemeInit />
         <Providers>
-          <ConditionalLayout>{children}</ConditionalLayout>
+          <AuthProvider>
+            <ConditionalLayout>
+              <OrderFilesProvider>{children}</OrderFilesProvider>
+            </ConditionalLayout>
+          </AuthProvider>
         </Providers>
       </body>
     </html>

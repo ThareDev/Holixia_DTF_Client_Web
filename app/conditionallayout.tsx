@@ -12,7 +12,7 @@ export default function ConditionalLayout({
   const pathname = usePathname();
 
   // Define routes that should NOT have header/footer
-  const routesWithoutLayout = ['/login', '/register', '/dashboard'];
+  const routesWithoutLayout = ['/login', '/register','/admin-panel/orders'];
 
   // Check if current route should hide layout
   const shouldHideLayout = routesWithoutLayout.some((route) =>
