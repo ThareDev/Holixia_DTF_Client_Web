@@ -90,9 +90,9 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
                                     <motion.div
                                         key={animationStep}
                                         initial={{ y: -50, x: 0, opacity: 0 }}
-                                        animate={{ 
-                                            y: 0, 
-                                            x: 0, 
+                                        animate={{
+                                            y: 0,
+                                            x: 0,
                                             opacity: 1,
                                             transition: { duration: 1, ease: "easeOut" }
                                         }}
@@ -136,7 +136,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
                                             <span className="text-white text-[10px] sm:text-xs font-bold">3</span>
                                         </div>
                                         <p className="text-white/80 text-xs sm:text-sm leading-relaxed">
-                                            Click <strong className="text-white">"Add to Order"</strong> and repeat for more designs
+                                            Click <strong className="text-white">&quot;Add to Order&quot;</strong> and repeat for more designs
                                         </p>
                                     </div>
                                 </div>

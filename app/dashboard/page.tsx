@@ -239,10 +239,16 @@ export default function Dashboard() {
       });
 
       // Total Amount
-      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      interface JsPDFWithAutoTable extends jsPDF {
+        lastAutoTable?: {
+          finalY: number;
+        };
+      }
+
+      const finalY = (doc as JsPDFWithAutoTable).lastAutoTable?.finalY ?? 200;
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Total Amount: ${formatPrice(order.totalAmount)}`, 20, finalY);
+      doc.text(`Total Amount: ${formatPrice(order.totalAmount)}`, 20, finalY + 10);
 
       // Footer
       doc.setFontSize(9);

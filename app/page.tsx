@@ -9,7 +9,11 @@ import { useSelector } from 'react-redux';
 interface RootState {
   auth: {
     isAuthenticated: boolean;
-    user: any;
+    user: {
+      id?: string;
+      email?: string;
+      name?: string;
+    } | null;
   };
 }
 

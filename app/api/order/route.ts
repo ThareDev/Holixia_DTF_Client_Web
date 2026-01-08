@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/mongodb';
 import Order from '@/lib/db/models/Order';
-import { authenticateToken } from '@/lib/middlewares/auth';
 
 export async function GET(request: NextRequest) {
     try {
@@ -20,7 +19,21 @@ export async function GET(request: NextRequest) {
         const maxAmount = searchParams.get('maxAmount');
 
         // Build query with proper typing
-        const query: Record<string, any> = {};
+        // Build query with proper typing
+        interface QueryFilter {
+            status?: string;
+            $or?: Array<Record<string, RegExp>>;
+            createdAt?: {
+                $gte: Date;
+                $lte: Date;
+            };
+            totalAmount?: {
+                $gte?: number;
+                $lte?: number;
+            };
+        }
+
+        const query: QueryFilter = {};
 
         // Status filter
         if (status) {

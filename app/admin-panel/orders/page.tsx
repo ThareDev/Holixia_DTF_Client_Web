@@ -86,56 +86,56 @@ export default function ManageOrdersPage() {
         return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     };
 
-   const handleDownloadOrderImages = async (order: Order) => {
-    showLoadingAlert('Preparing download...');
+    const handleDownloadOrderImages = async (order: Order) => {
+        showLoadingAlert('Preparing download...');
 
-    try {
-        const response = await fetch('/api/order/download-images', {  // Fixed path
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                orderId: order.orderId
-            }),
-        });
+        try {
+            const response = await fetch('/api/order/download-images', {  // Fixed path
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    orderId: order.orderId
+                }),
+            });
 
-        if (!response.ok) {
-            // Try to parse error message if it's JSON
-            let errorMessage = 'Failed to download images';
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
-            } catch {
-                // If response is not JSON, use status text
-                errorMessage = response.statusText || errorMessage;
+            if (!response.ok) {
+                // Try to parse error message if it's JSON
+                let errorMessage = 'Failed to download images';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch {
+                    // If response is not JSON, use status text
+                    errorMessage = response.statusText || errorMessage;
+                }
+                throw new Error(errorMessage);
             }
-            throw new Error(errorMessage);
+
+            // Get the blob from response
+            const blob = await response.blob();
+
+            // Check if blob has content
+            if (blob.size === 0) {
+                throw new Error('Downloaded file is empty');
+            }
+
+            // Download the zip file
+            saveAs(blob, `${order.orderId}.zip`);
+
+            closeAlert();
+            await showSuccessAlert(`Downloaded ${order.items.length} image(s) successfully`, 'Success');
+        } catch (error) {
+            closeAlert();
+            console.error('Download error:', error);
+            showErrorAlert(
+                error instanceof Error ? error.message : 'Failed to download images',
+                'Error'
+            );
         }
-
-        // Get the blob from response
-        const blob = await response.blob();
-
-        // Check if blob has content
-        if (blob.size === 0) {
-            throw new Error('Downloaded file is empty');
-        }
-
-        // Download the zip file
-        saveAs(blob, `${order.orderId}.zip`);
-
-        closeAlert();
-        await showSuccessAlert(`Downloaded ${order.items.length} image(s) successfully`, 'Success');
-    } catch (error) {
-        closeAlert();
-        console.error('Download error:', error);
-        showErrorAlert(
-            error instanceof Error ? error.message : 'Failed to download images',
-            'Error'
-        );
-    }
-};
+    };
 
     const fetchOrders = async () => {
         try {
@@ -191,7 +191,7 @@ export default function ManageOrdersPage() {
                 await showSuccessAlert('Order status updated successfully', 'Success');
                 fetchOrders();
                 if (selectedOrder && selectedOrder._id === orderId) {
-                    setSelectedOrder({ ...selectedOrder, status: newStatus as any });
+                    setSelectedOrder({ ...selectedOrder, status: newStatus as Order['status'] });
                 }
             } else {
                 showErrorAlert(data.message || 'Failed to update status', 'Error');
