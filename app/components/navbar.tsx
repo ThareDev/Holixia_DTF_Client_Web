@@ -276,7 +276,7 @@ export default function Navbar() {
 
                       {/* Menu Items */}
                       <div className="py-2">
-                        <Link href="/profile" onClick={() => setIsProfileMenuOpen(false)}>
+                        <Link href="/auth-profile" onClick={() => setIsProfileMenuOpen(false)}>
                           <motion.button
                             className="w-full px-4 py-3 text-left text-white/80 hover:text-white hover:bg-white/5 transition-all flex items-center gap-3"
                             whileHover={{ x: 5 }}
@@ -437,7 +437,7 @@ export default function Navbar() {
                     <p className="text-white font-semibold text-sm">{user.fullName}</p>
                     <p className="text-white/60 text-xs mt-1">{user.email}</p>
                   </div>
-                  <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href="/auth-profile" onClick={() => setIsMobileMenuOpen(false)}>
                     <button className="block w-full px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all text-left">
                       My Profile
                     </button>

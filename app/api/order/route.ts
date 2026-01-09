@@ -4,8 +4,6 @@ import Order from '@/lib/db/models/Order';
 
 export async function GET(request: NextRequest) {
     try {
-
-
         await dbConnect();
 
         // Get query parameters
@@ -15,21 +13,14 @@ export async function GET(request: NextRequest) {
         const status = searchParams.get('status');
         const search = searchParams.get('search');
         const createdAtDate = searchParams.get('createdAtDate');
-        const minAmount = searchParams.get('minAmount');
-        const maxAmount = searchParams.get('maxAmount');
 
-        // Build query with proper typing
-        // Build query with proper typing
+        // Build query
         interface QueryFilter {
             status?: string;
             $or?: Array<Record<string, RegExp>>;
             createdAt?: {
                 $gte: Date;
                 $lte: Date;
-            };
-            totalAmount?: {
-                $gte?: number;
-                $lte?: number;
             };
         }
 
@@ -62,17 +53,6 @@ export async function GET(request: NextRequest) {
                 $gte: startOfDay,
                 $lte: endOfDay,
             };
-        }
-
-        // Total amount range filter
-        if (minAmount || maxAmount) {
-            query.totalAmount = {};
-            if (minAmount) {
-                query.totalAmount.$gte = parseFloat(minAmount);
-            }
-            if (maxAmount) {
-                query.totalAmount.$lte = parseFloat(maxAmount);
-            }
         }
 
         // Get orders with pagination

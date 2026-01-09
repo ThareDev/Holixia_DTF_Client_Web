@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
+import Image from 'next/image';
+import home from '@/public/img/home.webp';
 
 // Add this interface for the Redux state
 interface RootState {
@@ -231,7 +233,7 @@ export default function Home() {
             className="flex-1 relative w-full"
           >
             <div className="relative w-full h-[350px] sm:h-[450px] md:h-[500px] flex items-center justify-center">
-              {/* Decorative elements */}
+              {/* Decorative background blur */}
               <motion.div
                 className="absolute inset-0 bg-gradient-to-br from-[#a60054]/20 to-[#211f60]/20 rounded-3xl blur-3xl"
                 animate={{
@@ -245,9 +247,9 @@ export default function Home() {
                 }}
               />
 
-              {/* Central card */}
+              {/* Main Image Container */}
               <motion.div
-                className="relative z-10 w-60 h-60 sm:w-72 sm:h-72 md:w-80 md:h-80 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl flex items-center justify-center"
+                className="relative z-10 w-60 h-60 sm:w-72 sm:h-72 md:w-80 md:h-80 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden"
                 animate={{
                   y: [0, -20, 0],
                 }}
@@ -257,9 +259,16 @@ export default function Home() {
                   ease: "easeInOut"
                 }}
               >
-                <svg className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+                <Image
+                  src={home}
+                  alt="DTF Printing Preview"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 240px, (max-width: 768px) 288px, 320px"
+                  priority
+                />
+                {/* Optional overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#211f60]/30 to-transparent" />
               </motion.div>
 
               {/* Floating elements */}

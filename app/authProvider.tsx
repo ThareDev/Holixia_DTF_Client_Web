@@ -7,15 +7,16 @@ import { loadUserFromStorage, logout } from '@/store/slices/authSlice';
 import { RootState } from '@/store/store';
 
 const publicRoutes = ['/login', '/register', '/'];
+const adminOnlyRoutes = ['/admin-panel'];
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
     const dispatch = useDispatch();
-    const { isAuthenticated, token } = useSelector((state: RootState) => state.auth);
+    const { isAuthenticated, token, user } = useSelector((state: RootState) => state.auth);
     const [isLoading, setIsLoading] = useState(true);
 
-    console.log('AuthProvider - isAuthenticated:', isAuthenticated, 'token:', token);
+    console.log('AuthProvider - isAuthenticated:', isAuthenticated, 'token:', token, 'userType:', user?.userType);
 
     // Load user from localStorage on mount
     useEffect(() => {
@@ -29,11 +30,28 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         if (isLoading) return;
 
         const isPublicRoute = publicRoutes.includes(pathname);
+        const isAdminRoute = adminOnlyRoutes.some(route => pathname.startsWith(route));
         
-        if (!isPublicRoute && !isAuthenticated) {
+        // Check if user is trying to access admin route
+        if (isAdminRoute) {
+            if (!isAuthenticated) {
+                // Not logged in - redirect to login
+                router.push('/login');
+                return;
+            }
+            
+            if (user?.userType !== 'admin') {
+                // Logged in but not admin - redirect to home or dashboard
+                router.push('/');
+                return;
+            }
+        }
+        
+        // Check authentication for other protected routes
+        if (!isPublicRoute && !isAdminRoute && !isAuthenticated) {
             router.push('/login');
         }
-    }, [isAuthenticated, pathname, router, isLoading]);
+    }, [isAuthenticated, pathname, router, isLoading, user]);
 
     // Setup global fetch interceptor for 401 responses
     useEffect(() => {
@@ -59,7 +77,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     // Show loading state while checking authentication
     if (isLoading) {
-        return null; // or a loading spinner
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a0015] via-[#211f60] to-[#0a0015]">
+                <div className="w-16 h-16 border-4 border-[#a60054] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
     }
 
     return <>{children}</>;

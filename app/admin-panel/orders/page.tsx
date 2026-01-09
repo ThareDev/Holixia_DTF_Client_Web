@@ -5,7 +5,6 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
 import Image from 'next/image';
 import { showErrorAlert, showLoadingAlert, closeAlert, showSuccessAlert } from '@/lib/utils/sweetAlert';
-import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
 interface OrderItem {
@@ -51,10 +50,7 @@ export default function ManageOrdersPage() {
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
-    const [createdAtDate, setCreatedAtDate] = useState(() => {
-        const today = new Date();
-        return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    });
+    const [createdAtDate, setCreatedAtDate] = useState('');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
@@ -76,8 +72,6 @@ export default function ManageOrdersPage() {
         });
     };
 
-    console.log('token:', token);
-
     const formatFileSize = (bytes: number): string => {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -90,7 +84,7 @@ export default function ManageOrdersPage() {
         showLoadingAlert('Preparing download...');
 
         try {
-            const response = await fetch('/api/order/download-images', {  // Fixed path
+            const response = await fetch('/api/order/download-images', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -102,27 +96,22 @@ export default function ManageOrdersPage() {
             });
 
             if (!response.ok) {
-                // Try to parse error message if it's JSON
                 let errorMessage = 'Failed to download images';
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
                 } catch {
-                    // If response is not JSON, use status text
                     errorMessage = response.statusText || errorMessage;
                 }
                 throw new Error(errorMessage);
             }
 
-            // Get the blob from response
             const blob = await response.blob();
 
-            // Check if blob has content
             if (blob.size === 0) {
                 throw new Error('Downloaded file is empty');
             }
 
-            // Download the zip file
             saveAs(blob, `${order.orderId}.zip`);
 
             closeAlert();
@@ -150,9 +139,6 @@ export default function ManageOrdersPage() {
             if (createdAtDate) params.append('createdAtDate', createdAtDate);
 
             const response = await fetch(`/api/order?${params.toString()}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
             });
 
             const data = await response.json();
@@ -175,7 +161,7 @@ export default function ManageOrdersPage() {
         showLoadingAlert('Updating order status...');
 
         try {
-            const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+            const response = await fetch(`/api/order/${orderId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -200,6 +186,41 @@ export default function ManageOrdersPage() {
             closeAlert();
             console.error('Update status error:', error);
             showErrorAlert('Failed to update status', 'Error');
+        }
+    };
+
+    const handleQuickStatusUpdate = async (orderId: string, currentStatus: string, event: React.ChangeEvent<HTMLSelectElement>) => {
+        const newStatus = event.target.value;
+        
+        if (newStatus === currentStatus) return;
+
+        showLoadingAlert('Updating order status...');
+
+        try {
+            const response = await fetch(`/api/order/${orderId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ status: newStatus }),
+            });
+
+            const data = await response.json();
+            closeAlert();
+
+            if (response.ok && data.success) {
+                await showSuccessAlert('Order status updated successfully', 'Success');
+                fetchOrders();
+            } else {
+                showErrorAlert(data.message || 'Failed to update status', 'Error');
+                event.target.value = currentStatus;
+            }
+        } catch (error) {
+            closeAlert();
+            console.error('Update status error:', error);
+            showErrorAlert('Failed to update status', 'Error');
+            event.target.value = currentStatus;
         }
     };
 
@@ -248,7 +269,6 @@ export default function ManageOrdersPage() {
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                     {/* Search */}
-                    {/* Search */}
                     <div>
                         <label className="block text-sm font-medium text-white/80 mb-2">
                             Search
@@ -259,16 +279,27 @@ export default function ManageOrdersPage() {
                                 ?
                             </span>
                         </label>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search by Order ID, Name, or Contact..."
-                            className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#a60054]"
-                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                        />
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Search by Order ID, Name, or Contact..."
+                                className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#a60054]"
+                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                            />
+                            <button
+                                onClick={handleSearch}
+                                className="px-4 py-2 bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-xl hover:opacity-90 transition-all flex items-center gap-2"
+                                title="Search"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    {/* Status Filter */}
+
                     {/* Status Filter */}
                     <div>
                         <label className="block text-sm font-medium text-white/80 mb-2">
@@ -289,7 +320,6 @@ export default function ManageOrdersPage() {
                     </div>
 
                     {/* Created At Date */}
-                    {/* Created At Date */}
                     <div>
                         <label className="block text-sm font-medium text-white/80 mb-2">
                             Created Date
@@ -298,25 +328,18 @@ export default function ManageOrdersPage() {
                             type="date"
                             value={createdAtDate}
                             onChange={(e) => setCreatedAtDate(e.target.value)}
-                            defaultValue={new Date().toISOString().split('T')[0]}
                             className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-[#a60054]"
                         />
                     </div>
                 </div>
 
                 {/* Filter Actions */}
-                <div className="flex gap-3">
-                    <button
-                        onClick={handleSearch}
-                        className="px-6 py-2 bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-xl hover:opacity-90 transition-all"
-                    >
-                        Apply Filters
-                    </button>
+                <div className="flex gap-3 justify-end">
                     <button
                         onClick={handleReset}
                         className="px-6 py-2 bg-white/10 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 transition-all"
                     >
-                        Reset
+                        Reset All Filters
                     </button>
                 </div>
             </div>
@@ -365,9 +388,18 @@ export default function ManageOrdersPage() {
                                                 <span className="text-white font-semibold">{formatPrice(order.totalAmount)}</span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-3 py-1 rounded-lg text-xs font-semibold border ${getStatusColor(order.status)}`}>
-                                                    {order.status.replace('_', ' ').toUpperCase()}
-                                                </span>
+                                                <select
+                                                    value={order.status}
+                                                    onChange={(e) => handleQuickStatusUpdate(order._id, order.status, e)}
+                                                    className={`px-3 py-1 rounded-lg text-xs font-semibold border ${getStatusColor(order.status)} bg-transparent cursor-pointer hover:opacity-80 transition-all`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <option value="pending" className="bg-[#211f60] text-white">PENDING</option>
+                                                    <option value="payment_verified" className="bg-[#211f60] text-white">PAYMENT VERIFIED</option>
+                                                    <option value="processing" className="bg-[#211f60] text-white">PROCESSING</option>
+                                                    <option value="delivered" className="bg-[#211f60] text-white">DELIVERED</option>
+                                                    <option value="cancelled" className="bg-[#211f60] text-white">CANCELLED</option>
+                                                </select>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="text-white/70 text-sm">{formatDate(order.orderDate)}</span>
@@ -446,7 +478,6 @@ export default function ManageOrdersPage() {
 
                         <div className="p-6 space-y-6">
                             {/* Status Update */}
-                            {/* Status Update */}
                             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                                 <label className="block text-sm font-medium text-white/80 mb-3">
                                     Update Status
@@ -463,6 +494,7 @@ export default function ManageOrdersPage() {
                                     <option value="cancelled">Cancelled</option>
                                 </select>
                             </div>
+
                             {/* Customer Info */}
                             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                                 <h3 className="text-lg font-bold text-white mb-4">Customer Information</h3>

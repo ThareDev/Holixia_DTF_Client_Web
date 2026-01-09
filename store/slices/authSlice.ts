@@ -1,11 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface User {
+export interface User {
   id: string;
   fullName: string;
   email: string;
   contactNumber: string;
   userType: 'customer' | 'admin';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface AuthState {
@@ -53,6 +55,19 @@ const authSlice = createSlice({
         localStorage.setItem('user', JSON.stringify(action.payload.user));
       }
     },
+    updateUser: (state, action: PayloadAction<Partial<User>>) => {
+      if (state.user) {
+        state.user = {
+          ...state.user,
+          ...action.payload,
+        };
+        
+        // Update localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user', JSON.stringify(state.user));
+        }
+      }
+    },
     logout: (state) => {
       state.user = null;
       state.token = null;
@@ -84,6 +99,7 @@ export const {
   setLoading,
   loginSuccess,
   registerSuccess,
+  updateUser,
   logout,
   loadUserFromStorage,
 } = authSlice.actions;
