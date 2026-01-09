@@ -5,7 +5,7 @@ import { authenticateToken } from '@/lib/middlewares/auth';
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { orderId: string } }
+    context: { params: Promise<{ orderId: string }> }
 ) {
     try {
         const auth = authenticateToken(request);
@@ -16,8 +16,10 @@ export async function PATCH(
             );
         }
 
-
         await dbConnect();
+
+        // Await params
+        const { orderId } = await context.params;
 
         const { status } = await request.json();
 
@@ -32,7 +34,7 @@ export async function PATCH(
 
         // Find and update order
         const order = await Order.findByIdAndUpdate(
-            params.orderId,
+            orderId,
             { status },
             { new: true, runValidators: true }
         );
