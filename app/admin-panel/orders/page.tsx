@@ -6,11 +6,13 @@ import { RootState } from '@/store/store';
 import Image from 'next/image';
 import { showErrorAlert, showLoadingAlert, closeAlert, showSuccessAlert } from '@/lib/utils/sweetAlert';
 import { saveAs } from 'file-saver';
+import FilePreview from '@/app/components/ImagePreview';
 
 interface OrderItem {
     imageUrl: string;
     fileName: string;
     fileSize: number;
+    fileType: 'image' | 'pdf';  // ✅ ADD THIS LINE
     size: 'A4' | 'A3';
     quantity: number;
     pricePerUnit: number;
@@ -114,8 +116,18 @@ export default function ManageOrdersPage() {
 
             saveAs(blob, `${order.orderId}.zip`);
 
+            // Count images and PDFs
+            const imageCount = order.items.filter(item => item.fileType === 'image').length;
+            const pdfCount = order.items.filter(item => item.fileType === 'pdf').length;
+
+            // Build success message
+            const fileParts = [];
+            if (imageCount > 0) fileParts.push(`${imageCount} image(s)`);
+            if (pdfCount > 0) fileParts.push(`${pdfCount} PDF(s)`);
+            const fileMessage = fileParts.join(' and ');
+
             closeAlert();
-            await showSuccessAlert(`Downloaded ${order.items.length} image(s) successfully`, 'Success');
+            await showSuccessAlert(`Downloaded ${fileMessage} successfully`, 'Success');
         } catch (error) {
             closeAlert();
             console.error('Download error:', error);
@@ -191,7 +203,7 @@ export default function ManageOrdersPage() {
 
     const handleQuickStatusUpdate = async (orderId: string, currentStatus: string, event: React.ChangeEvent<HTMLSelectElement>) => {
         const newStatus = event.target.value;
-        
+
         if (newStatus === currentStatus) return;
 
         showLoadingAlert('Updating order status...');
@@ -415,12 +427,12 @@ export default function ManageOrdersPage() {
                                                     <button
                                                         onClick={() => handleDownloadOrderImages(order)}
                                                         className="px-4 py-2 bg-green-500/20 border border-green-500/40 text-green-400 rounded-lg text-sm font-medium hover:bg-green-500/30 transition-all flex items-center gap-2"
-                                                        title="Download all images"
+                                                        title="Download all files (images and PDFs)"
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                         </svg>
-                                                        Download
+                                                        Download Files
                                                     </button>
                                                 </div>
                                             </td>
@@ -461,7 +473,7 @@ export default function ManageOrdersPage() {
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedOrder(null)}>
                     <div className="bg-gradient-to-br from-[#0a0015] via-[#211f60] to-[#0a0015] border border-white/20 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         {/* Modal Header */}
-                        <div className="sticky top-0 bg-white/5 backdrop-blur-xl border-b border-white/10 p-6 flex items-center justify-between">
+                        <div className="sticky top-0 bg-white/5 backdrop-blur-xl border-b border-white/10 p-6 flex items-center justify-between z-10">
                             <div>
                                 <h2 className="text-2xl font-bold text-white">Order Details</h2>
                                 <p className="text-white/60 text-sm font-mono">{selectedOrder.orderId}</p>
@@ -522,26 +534,46 @@ export default function ManageOrdersPage() {
 
                             {/* Order Items */}
                             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                                <h3 className="text-lg font-bold text-white mb-4">Order Items</h3>
-                                <div className="space-y-3">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold text-white">Order Items</h3>
+                                    <button
+                                        onClick={() => handleDownloadOrderImages(selectedOrder)}
+                                        className="px-4 py-2 bg-green-500/20 border border-green-500/40 text-green-400 rounded-lg text-sm font-medium hover:bg-green-500/30 transition-all flex items-center gap-2"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        Download All Files
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {selectedOrder.items.map((item, index) => (
-                                        <div key={index} className="flex gap-4 bg-white/5 rounded-xl p-3">
-                                            <div className="relative w-20 h-20 flex-shrink-0 bg-white/5 rounded-lg overflow-hidden">
-                                                <Image
-                                                    src={item.imageUrl}
-                                                    alt={item.fileName}
-                                                    fill
-                                                    className="object-cover"
-                                                    sizes="80px"
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-white font-medium text-sm">{item.fileName}</p>
-                                                <p className="text-white/60 text-xs">{formatFileSize(item.fileSize)}</p>
-                                                <div className="flex items-center gap-4 mt-2 text-xs">
-                                                    <span className="text-white/70">Size: <span className="text-white font-semibold">{item.size}</span></span>
-                                                    <span className="text-white/70">Qty: <span className="text-white font-semibold">{item.quantity}</span></span>
-                                                    <span className="text-[#a60054] font-bold">{formatPrice(item.totalPrice)}</span>
+                                        <div key={index} className="space-y-3">
+                                            {/* File Preview Component */}
+                                            <FilePreview
+                                                fileUrl={item.imageUrl}
+                                                fileName={item.fileName}
+                                                fileSize={item.fileSize}
+                                                fileType={item.fileType || 'image'}
+                                            />
+
+                                            {/* Item Details */}
+                                            <div className="bg-white/5 rounded-xl p-3">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-white/60 text-xs">Print Size</span>
+                                                    <span className="text-white font-semibold text-sm">{item.size}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-white/60 text-xs">Quantity</span>
+                                                    <span className="text-white font-semibold text-sm">{item.quantity} prints</span>
+                                                </div>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-white/60 text-xs">Price per Unit</span>
+                                                    <span className="text-white font-semibold text-sm">{formatPrice(item.pricePerUnit)}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                                                    <span className="text-white/80 text-sm font-medium">Subtotal</span>
+                                                    <span className="text-[#a60054] font-bold text-base">{formatPrice(item.totalPrice)}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -552,38 +584,32 @@ export default function ManageOrdersPage() {
                             {/* Payment Info */}
                             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                                 <h3 className="text-lg font-bold text-white mb-4">Payment Information</h3>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between">
-                                        <span className="text-white/60">Payment Date</span>
-                                        <span className="text-white font-medium">{formatDate(selectedOrder.paymentInfo.paymentDate)}</span>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-white/60 text-sm mb-1">Payment Date</p>
+                                            <p className="text-white font-medium">{formatDate(selectedOrder.paymentInfo.paymentDate)}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-white/60 text-sm mb-1">Receipt File</p>
+                                            <p className="text-white font-medium text-sm truncate">{selectedOrder.paymentInfo.receiptFileName}</p>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-white/60">Receipt File</span>
-                                        <span className="text-white font-medium">{selectedOrder.paymentInfo.receiptFileName}</span>
-                                    </div>
-                                    <div className="mt-4">
-                                        <p className="text-white/60 text-sm mb-2">Payment Receipt</p>
-                                        <div className="relative w-full h-64 bg-white/5 rounded-xl overflow-hidden">
-                                            <Image
-                                                src={selectedOrder.paymentInfo.receiptUrl}
-                                                alt="Payment Receipt"
-                                                fill
-                                                className="object-contain"
-                                                sizes="(max-width: 768px) 100vw, 50vw"
+
+                                    {/* Payment Receipt Preview */}
+                                    <div>
+                                        <p className="text-white/60 text-sm mb-3">Payment Receipt</p>
+                                        <div className="max-w-md">
+                                            <FilePreview
+                                                fileUrl={selectedOrder.paymentInfo.receiptUrl}
+                                                fileName={selectedOrder.paymentInfo.receiptFileName}
+                                                fileSize={selectedOrder.paymentInfo.receiptFileSize}
+                                                fileType={selectedOrder.paymentInfo.receiptFileName.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'}
                                             />
                                         </div>
-                                        <a
-                                            href={selectedOrder.paymentInfo.receiptUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-block mt-2 px-4 py-2 bg-[#a60054]/20 border border-[#a60054]/40 text-[#a60054] rounded-lg text-sm font-medium hover:bg-[#a60054]/30 transition-all"
-                                        >
-                                            View Full Receipt
-                                        </a>
                                     </div>
                                 </div>
                             </div>
-
                             {/* Total */}
                             <div className="bg-gradient-to-r from-[#a60054]/10 to-[#211f60]/10 border border-[#a60054]/20 rounded-xl p-4">
                                 <div className="flex justify-between items-center">

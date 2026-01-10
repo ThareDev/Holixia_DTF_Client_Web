@@ -4,6 +4,7 @@ export interface IOrderItem {
   imageUrl: string;
   fileName: string;
   fileSize: number;
+  fileType: 'image' | 'pdf';
   size: 'A4' | 'A3';
   quantity: number;
   pricePerUnit: number;
@@ -44,6 +45,11 @@ const OrderItemSchema = new Schema({
   },
   fileSize: {
     type: Number,
+    required: true,
+  },
+  fileType: {
+    type: String,
+    enum: ['image', 'pdf'],
     required: true,
   },
   size: {
@@ -147,7 +153,6 @@ const OrderSchema = new Schema<IOrder>(
   }
 );
 
-// Indexes
 OrderSchema.index({ userId: 1, createdAt: -1 });
 OrderSchema.index({ status: 1 });
 

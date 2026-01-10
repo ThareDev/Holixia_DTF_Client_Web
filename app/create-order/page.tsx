@@ -10,15 +10,17 @@ import { addOrderItem, removeOrderItem, updateOrderItem, clearOrder } from '@/st
 import OnboardingModal from '@/app/components/onboardingModal';
 import { showErrorAlert, showConfirmAlert } from '@/lib/utils/sweetAlert';
 import { useOrderFiles } from '@/lib/contexts/OrderFilesContext';
-
+import FilePreview from '@/app/components/ImagePreview';
 
 type PrintSize = 'A4' | 'A3';
+type FileType = 'image' | 'pdf';
 
 interface OrderItem {
     id: string;
     imagePreview: string;
     fileName: string;
     fileSize: number;
+    fileType: FileType;
     size: PrintSize;
     quantity: number;
     pricePerUnit: number;
@@ -31,21 +33,21 @@ const PRICE_PER_SIZE: Record<PrintSize, number> = {
 };
 
 export default function CreateOrderPage() {
-    // Current upload state
     const dispatch = useDispatch();
     const router = useRouter();
     const { setFile, deleteFile, getAllFiles } = useOrderFiles();
 
-    // Get order items from Redux instead of local state
     const { items: orderItems, totalAmount } = useSelector((state: RootState) => state.order);
 
     const [currentImage, setCurrentImage] = useState<string | null>(null);
     const [currentFileName, setCurrentFileName] = useState<string>('');
     const [currentFileSize, setCurrentFileSize] = useState<number>(0);
     const [currentFile, setCurrentFile] = useState<File | null>(null);
+    const [currentFileType, setCurrentFileType] = useState<FileType>('image');
     const [selectedSize, setSelectedSize] = useState<PrintSize>('A4');
     const [quantity, setQuantity] = useState(1);
     const [isDragging, setIsDragging] = useState(false);
+    const [uploadMode, setUploadMode] = useState<'image' | 'pdf'>('image');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [showOnboarding, setShowOnboarding] = useState(true);
@@ -86,9 +88,18 @@ export default function CreateOrderPage() {
 
         const file = files[0];
 
-        if (!file.type.startsWith('image/')) {
-            showErrorAlert('Please select a valid image file', 'Invalid File Type');
-            return;
+        // Validate file type based on upload mode
+        if (uploadMode === 'image') {
+            const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            if (!validImageTypes.includes(file.type.toLowerCase())) {
+                showErrorAlert('Please select a valid JPG or PNG image file', 'Invalid File Type');
+                return;
+            }
+        } else {
+            if (file.type !== 'application/pdf') {
+                showErrorAlert('Please select a valid PDF file', 'Invalid File Type');
+                return;
+            }
         }
 
         if (file.size > 50 * 1024 * 1024) {
@@ -101,7 +112,8 @@ export default function CreateOrderPage() {
             setCurrentImage(e.target?.result as string);
             setCurrentFileName(file.name);
             setCurrentFileSize(file.size);
-            setCurrentFile(file); // ✅ ADD THIS LINE
+            setCurrentFile(file);
+            setCurrentFileType(uploadMode);
         };
         reader.readAsDataURL(file);
     };
@@ -124,18 +136,16 @@ export default function CreateOrderPage() {
     const handleAddToOrder = () => {
         if (!currentImage || !currentFile) return;
 
-        // Generate unique ID first
         const itemId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
 
-        // Store file in context with the generated ID
         setFile(itemId, currentFile);
 
-        // Store metadata in Redux with the same ID
         dispatch(addOrderItem({
-            id: itemId, // ✅ ADD THIS LINE to ensure IDs match
+            id: itemId,
             imagePreview: currentImage,
             fileName: currentFileName,
             fileSize: currentFileSize,
+            fileType: currentFileType,
             size: selectedSize,
             quantity: quantity,
         }));
@@ -144,9 +154,11 @@ export default function CreateOrderPage() {
         setCurrentImage(null);
         setCurrentFileName('');
         setCurrentFileSize(0);
-        setCurrentFile(null); // ✅ ADD THIS LINE
+        setCurrentFile(null);
+        setCurrentFileType('image');
         setSelectedSize('A4');
         setQuantity(1);
+        setUploadMode('image');
 
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -157,7 +169,8 @@ export default function CreateOrderPage() {
         setCurrentImage(null);
         setCurrentFileName('');
         setCurrentFileSize(0);
-        setCurrentFile(null); // ✅ ADD THIS LINE
+        setCurrentFile(null);
+        setCurrentFileType('image');
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -178,7 +191,7 @@ export default function CreateOrderPage() {
     };
 
     const getTotalAmount = () => {
-        return totalAmount; // Use Redux totalAmount directly
+        return totalAmount;
     };
 
     const getTotalQuantity = () => {
@@ -199,7 +212,6 @@ export default function CreateOrderPage() {
         );
 
         if (result.isConfirmed) {
-            // Navigate to checkout page
             router.push('/checkout');
         }
     };
@@ -217,6 +229,11 @@ export default function CreateOrderPage() {
         }
     };
 
+    const handleUploadModeChange = (mode: 'image' | 'pdf') => {
+        setUploadMode(mode);
+        handleRemoveImage();
+    };
+
     return (
         <>
             <OnboardingModal
@@ -224,7 +241,6 @@ export default function CreateOrderPage() {
                 onClose={() => setShowOnboarding(false)}
             />
             <main className="min-h-screen w-full bg-gradient-to-br from-[#0a0015] via-[#211f60] to-[#0a0015] relative overflow-hidden mt-5 pt-24 pb-12">
-                {/* Animated background */}
                 <motion.div
                     className="absolute top-0 left-0 w-96 h-96 bg-[#a60054] rounded-full blur-3xl opacity-20"
                     animate={{
@@ -240,7 +256,6 @@ export default function CreateOrderPage() {
                 />
 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
-                    {/* Header */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -250,13 +265,50 @@ export default function CreateOrderPage() {
                             Create Your Order
                         </h1>
                         <p className="text-lg text-white/70">
-                            Upload designs one at a time and build your custom order
+                            Upload images or PDFs one at a time and build your custom order
                         </p>
                     </motion.div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-                        {/* Left Section - Upload Form */}
                         <div className="lg:col-span-2 space-y-6">
+                            {/* Upload Mode Toggle */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
+                            >
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => handleUploadModeChange('image')}
+                                        className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${uploadMode === 'image'
+                                            ? 'bg-gradient-to-r from-[#a60054] to-[#211f60] text-white'
+                                            : 'bg-white/5 text-white/60 hover:text-white'
+                                            }`}
+                                    >
+                                        <div className="flex items-center justify-center gap-2">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            Upload Image
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() => handleUploadModeChange('pdf')}
+                                        className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${uploadMode === 'pdf'
+                                            ? 'bg-gradient-to-r from-[#a60054] to-[#211f60] text-white'
+                                            : 'bg-white/5 text-white/60 hover:text-white'
+                                            }`}
+                                    >
+                                        <div className="flex items-center justify-center gap-2">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                            </svg>
+                                            Upload PDF
+                                        </div>
+                                    </button>
+                                </div>
+                            </motion.div>
+
                             {/* Upload Section */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -264,11 +316,10 @@ export default function CreateOrderPage() {
                                 className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8"
                             >
                                 <h2 className="text-2xl font-bold text-white mb-6">
-                                    {currentImage ? 'Design Preview' : 'Upload Design'}
+                                    {currentImage ? 'File Preview' : `Upload ${uploadMode === 'image' ? 'Image' : 'PDF'}`}
                                 </h2>
 
                                 {!currentImage ? (
-                                    /* Upload Area */
                                     <div
                                         onDrop={handleDrop}
                                         onDragOver={handleDragOver}
@@ -281,20 +332,26 @@ export default function CreateOrderPage() {
                                         <input
                                             ref={fileInputRef}
                                             type="file"
-                                            accept="image/*"
+                                            accept={uploadMode === 'image' ? 'image/jpeg,image/png' : 'application/pdf'}
                                             onChange={(e) => handleFileSelect(e.target.files)}
                                             className="hidden"
                                         />
 
                                         <motion.div animate={{ scale: isDragging ? 1.1 : 1 }}>
                                             <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#a60054] to-[#211f60] rounded-2xl flex items-center justify-center">
-                                                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                </svg>
+                                                {uploadMode === 'image' ? (
+                                                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                )}
                                             </div>
 
                                             <h3 className="text-xl font-semibold text-white mb-2">
-                                                {isDragging ? 'Drop your image here' : 'Drag & drop your image'}
+                                                {isDragging ? `Drop your ${uploadMode} here` : `Drag & drop your ${uploadMode}`}
                                             </h3>
                                             <p className="text-white/60 mb-6">
                                                 or click to browse from your computer
@@ -311,46 +368,26 @@ export default function CreateOrderPage() {
                                             </motion.button>
 
                                             <p className="text-xs text-white/40 mt-4">
-                                                Supported: JPG, PNG, GIF, WebP • Max: 50MB
+                                                {uploadMode === 'image'
+                                                    ? 'Supported: JPG, PNG • Max: 50MB'
+                                                    : 'Supported: PDF • Max: 50MB'
+                                                }
                                             </p>
                                         </motion.div>
                                     </div>
                                 ) : (
-                                    /* Image Preview */
                                     <div className="space-y-6">
-                                        <div className="relative bg-white/5 border-2 border-white/10 rounded-2xl overflow-hidden">
-                                            <div className="relative w-full aspect-square">
-                                                <Image
-                                                    src={currentImage}
-                                                    alt={currentFileName}
-                                                    fill
-                                                    className="object-contain"
-                                                    sizes="(max-width: 768px) 100vw, 50vw"
-                                                />
-                                            </div>
-
-                                            {/* Remove Button */}
-                                            <motion.button
-                                                onClick={handleRemoveImage}
-                                                className="absolute top-4 right-4 w-10 h-10 bg-red-500/20 backdrop-blur-md border border-red-500/30 rounded-xl flex items-center justify-center text-red-400 hover:bg-red-500/30"
-                                                whileHover={{ scale: 1.1 }}
-                                                whileTap={{ scale: 0.9 }}
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </motion.button>
-
-                                            {/* File Info */}
-                                            <div className="p-4 bg-gradient-to-b from-transparent to-black/20">
-                                                <p className="text-white font-medium text-sm truncate">{currentFileName}</p>
-                                                <p className="text-white/60 text-xs mt-1">{formatFileSize(currentFileSize)}</p>
-                                            </div>
-                                        </div>
+                                        {/* Use FilePreview Component */}
+                                        <FilePreview
+                                            fileUrl={currentImage}
+                                            fileName={currentFileName}
+                                            fileSize={currentFileSize}
+                                            fileType={currentFileType}
+                                            onRemove={handleRemoveImage}
+                                        />
 
                                         {/* Size & Quantity Selection */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                            {/* Size Selection */}
                                             <div>
                                                 <label className="block text-sm font-medium text-white/80 mb-3">
                                                     Print Size
@@ -389,7 +426,6 @@ export default function CreateOrderPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Quantity Selection */}
                                             <div>
                                                 <label className="block text-sm font-medium text-white/80 mb-3">
                                                     Print Quantity
@@ -402,7 +438,7 @@ export default function CreateOrderPage() {
                                                     <input
                                                         type="range"
                                                         min="1"
-                                                        max="100"
+                                                        max="1000"
                                                         value={quantity}
                                                         onChange={(e) => setQuantity(parseInt(e.target.value))}
                                                         className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#a60054]"
@@ -424,7 +460,6 @@ export default function CreateOrderPage() {
                                                         </button>
                                                     </div>
 
-                                                    {/* Price Preview */}
                                                     <div className="mt-4 pt-4 border-t border-white/10">
                                                         <div className="flex justify-between items-center">
                                                             <span className="text-white/70 text-sm">Cost for this item:</span>
@@ -437,7 +472,6 @@ export default function CreateOrderPage() {
                                             </div>
                                         </div>
 
-                                        {/* Add to Order Button */}
                                         <motion.button
                                             onClick={handleAddToOrder}
                                             className="w-full py-4 bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-xl shadow-lg"
@@ -448,6 +482,7 @@ export default function CreateOrderPage() {
                                         </motion.button>
                                     </div>
                                 )}
+
                             </motion.div>
 
                             {/* Order Items List */}
@@ -480,23 +515,35 @@ export default function CreateOrderPage() {
                                                     exit={{ opacity: 0, x: 20 }}
                                                     className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 flex gap-3 sm:gap-4"
                                                 >
-                                                    {/* Image Thumbnail - smaller on mobile */}
                                                     <div className="relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex-shrink-0 bg-white/5 rounded-lg overflow-hidden">
-                                                        <Image
-                                                            src={item.imagePreview}
-                                                            alt={item.fileName}
-                                                            fill
-                                                            className="object-cover"
-                                                            sizes="(max-width: 640px) 64px, (max-width: 1024px) 80px, 96px"
-                                                        />
+                                                        {item.fileType === 'pdf' ? (
+                                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-500/10 to-red-600/10">
+                                                                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                </svg>
+                                                            </div>
+                                                        ) : (
+                                                            <Image
+                                                                src={item.imagePreview}
+                                                                alt={item.fileName}
+                                                                fill
+                                                                className="object-cover"
+                                                                sizes="(max-width: 640px) 64px, (max-width: 1024px) 80px, 96px"
+                                                            />
+                                                        )}
                                                     </div>
 
-                                                    {/* Item Details */}
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-start justify-between gap-2 mb-3">
                                                             <div className="flex-1 min-w-0">
                                                                 <p className="text-white font-medium text-sm sm:text-base line-clamp-2 sm:truncate">{item.fileName}</p>
                                                                 <p className="text-white/60 text-xs">{formatFileSize(item.fileSize)}</p>
+                                                                <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${item.fileType === 'pdf'
+                                                                    ? 'bg-red-500/20 text-red-400'
+                                                                    : 'bg-blue-500/20 text-blue-400'
+                                                                    }`}>
+                                                                    {item.fileType.toUpperCase()}
+                                                                </span>
                                                             </div>
                                                             <button
                                                                 onClick={() => handleRemoveItem(item.id)}
@@ -508,7 +555,6 @@ export default function CreateOrderPage() {
                                                             </button>
                                                         </div>
 
-                                                        {/* Responsive layout: stacked on mobile, grid on larger screens */}
                                                         <div className="flex flex-col gap-3 sm:grid sm:grid-cols-3 sm:gap-3 text-sm">
                                                             <div className="flex items-center justify-between sm:block">
                                                                 <span className="text-white/60">Size</span>
@@ -557,7 +603,7 @@ export default function CreateOrderPage() {
 
                                 <div className="space-y-4 mb-6">
                                     <div className="flex justify-between text-white/70">
-                                        <span>Total Designs:</span>
+                                        <span>Total Files:</span>
                                         <span className="text-white font-semibold">{orderItems.length}</span>
                                     </div>
                                     <div className="flex justify-between text-white/70">
@@ -580,7 +626,7 @@ export default function CreateOrderPage() {
                                                     <div key={size.value} className="mb-3 pb-3 border-b border-white/5 last:border-0">
                                                         <div className="flex justify-between text-sm text-white/70 mb-1">
                                                             <span>{size.label}:</span>
-                                                            <span className="text-white">{count} design{count > 1 ? 's' : ''}</span>
+                                                            <span className="text-white">{count} file{count > 1 ? 's' : ''}</span>
                                                         </div>
                                                         <div className="flex justify-between text-xs text-white/60">
                                                             <span>{qty} prints × LKR {size.price}</span>
@@ -592,7 +638,6 @@ export default function CreateOrderPage() {
                                         </div>
                                     )}
 
-                                    {/* Total Amount */}
                                     <div className="border-t-2 border-[#a60054]/30 pt-4 mt-4">
                                         <div className="flex justify-between items-center">
                                             <span className="text-xl font-bold text-white">Total:</span>
@@ -610,7 +655,7 @@ export default function CreateOrderPage() {
                                     whileHover={orderItems.length > 0 ? { scale: 1.02 } : {}}
                                     whileTap={orderItems.length > 0 ? { scale: 0.98 } : {}}
                                 >
-                                    {orderItems.length === 0 ? 'Add Designs to Continue' : `Submit Order • ${formatPrice(getTotalAmount())}`}
+                                    {orderItems.length === 0 ? 'Add Files to Continue' : `Submit Order • ${formatPrice(getTotalAmount())}`}
                                 </motion.button>
 
                                 {orderItems.length > 0 && (

@@ -14,7 +14,9 @@ export default function RegisterPage() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
-    
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     const router = useRouter();
     const dispatch = useDispatch();
 
@@ -29,7 +31,7 @@ export default function RegisterPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (password !== confirmPassword) {
             showErrorAlert('Passwords do not match', 'Validation Error');
             return;
@@ -49,11 +51,11 @@ export default function RegisterPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    fullName, 
-                    email, 
-                    contactNumber, 
-                    password 
+                body: JSON.stringify({
+                    fullName,
+                    email,
+                    contactNumber,
+                    password
                 }),
             });
 
@@ -65,12 +67,12 @@ export default function RegisterPage() {
                     user: data.data.user,
                     token: data.data.token,
                 }));
-                
+
                 await showSuccessAlert(
                     'Your account has been created successfully!',
                     'Welcome!'
                 );
-                
+
                 router.push('/login');
             } else {
                 showErrorAlert(data.message || 'Registration failed', 'Registration Error');
@@ -224,236 +226,270 @@ export default function RegisterPage() {
                         `}</style>
                         <div className="flex items-start justify-center min-h-full p-8 md:p-12 py-12">
                             <div className="w-full max-w-md">
-                            <motion.div
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ duration: 0.8, delay: 0.5 }}
-                                className="mb-8"
-                            >
-                                <h2 className="text-4xl md:text-5xl font-bold text-white mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
-                                    Create Account
-                                </h2>
-                                <p className="text-white/60 text-lg">Sign up to get started</p>
-                            </motion.div>
-
-                            <form onSubmit={handleSubmit} className="space-y-5">
-                                {/* Full Name input */}
                                 <motion.div
                                     initial={{ y: 20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
-                                    transition={{ duration: 0.8, delay: 0.6 }}
+                                    transition={{ duration: 0.8, delay: 0.5 }}
+                                    className="mb-8"
                                 >
-                                    <label htmlFor="fullName" className="block text-sm font-medium text-white/80 mb-2">
-                                        Full Name
-                                    </label>
-                                    <div className="relative">
-                                        <motion.input
-                                            type="text"
-                                            id="fullName"
-                                            value={fullName}
-                                            onChange={(e) => setFullName(e.target.value)}
-                                            onFocus={() => setFocusedInput('fullName')}
-                                            onBlur={() => setFocusedInput(null)}
-                                            required
-                                            className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none transition-all duration-300 backdrop-blur-sm"
-                                            style={{
-                                                borderColor: focusedInput === 'fullName' ? '#a60054' : 'rgba(255, 255, 255, 0.2)'
-                                            }}
-                                            placeholder="John Doe"
-                                            animate={{
-                                                scale: focusedInput === 'fullName' ? 1.02 : 1,
-                                            }}
-                                            transition={{ duration: 0.2 }}
-                                        />
-                                    </div>
+                                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                        Create Account
+                                    </h2>
+                                    <p className="text-white/60 text-lg">Sign up to get started</p>
                                 </motion.div>
 
-                                {/* Email input */}
-                                <motion.div
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ duration: 0.8, delay: 0.65 }}
-                                >
-                                    <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
-                                        Email Address
-                                    </label>
-                                    <div className="relative">
-                                        <motion.input
-                                            type="email"
-                                            id="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            onFocus={() => setFocusedInput('email')}
-                                            onBlur={() => setFocusedInput(null)}
-                                            required
-                                            className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none transition-all duration-300 backdrop-blur-sm"
-                                            style={{
-                                                borderColor: focusedInput === 'email' ? '#a60054' : 'rgba(255, 255, 255, 0.2)'
-                                            }}
-                                            placeholder="you@example.com"
-                                            animate={{
-                                                scale: focusedInput === 'email' ? 1.02 : 1,
-                                            }}
-                                            transition={{ duration: 0.2 }}
-                                        />
-                                    </div>
-                                </motion.div>
-
-                                {/* Contact Number input */}
-                                <motion.div
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ duration: 0.8, delay: 0.7 }}
-                                >
-                                    <label htmlFor="contactNumber" className="block text-sm font-medium text-white/80 mb-2">
-                                        Contact Number
-                                    </label>
-                                    <div className="relative">
-                                        <motion.input
-                                            type="tel"
-                                            id="contactNumber"
-                                            value={contactNumber}
-                                            onChange={handleContactNumberChange}
-                                            onFocus={() => setFocusedInput('contactNumber')}
-                                            onBlur={() => setFocusedInput(null)}
-                                            required
-                                            pattern="\+947[0-9]{8}"
-                                            className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none transition-all duration-300 backdrop-blur-sm"
-                                            style={{
-                                                borderColor: focusedInput === 'contactNumber' ? '#a60054' : 'rgba(255, 255, 255, 0.2)'
-                                            }}
-                                            placeholder="+94712345678"
-                                            animate={{
-                                                scale: focusedInput === 'contactNumber' ? 1.02 : 1,
-                                            }}
-                                            transition={{ duration: 0.2 }}
-                                        />
-                                    </div>
-                                </motion.div>
-
-                                {/* Password input */}
-                                <motion.div
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ duration: 0.8, delay: 0.75 }}
-                                >
-                                    <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
-                                        Password
-                                    </label>
-                                    <div className="relative">
-                                        <motion.input
-                                            type="password"
-                                            id="password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            onFocus={() => setFocusedInput('password')}
-                                            onBlur={() => setFocusedInput(null)}
-                                            required
-                                            minLength={8}
-                                            className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none transition-all duration-300 backdrop-blur-sm"
-                                            style={{
-                                                borderColor: focusedInput === 'password' ? '#a60054' : 'rgba(255, 255, 255, 0.2)'
-                                            }}
-                                            placeholder="••••••••"
-                                            animate={{
-                                                scale: focusedInput === 'password' ? 1.02 : 1,
-                                            }}
-                                            transition={{ duration: 0.2 }}
-                                        />
-                                    </div>
-                                </motion.div>
-
-                                {/* Confirm Password input */}
-                                <motion.div
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ duration: 0.8, delay: 0.8 }}
-                                >
-                                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/80 mb-2">
-                                        Confirm Password
-                                    </label>
-                                    <div className="relative">
-                                        <motion.input
-                                            type="password"
-                                            id="confirmPassword"
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            onFocus={() => setFocusedInput('confirmPassword')}
-                                            onBlur={() => setFocusedInput(null)}
-                                            required
-                                            minLength={8}
-                                            className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none transition-all duration-300 backdrop-blur-sm"
-                                            style={{
-                                                borderColor: focusedInput === 'confirmPassword' ? '#a60054' : 'rgba(255, 255, 255, 0.2)'
-                                            }}
-                                            placeholder="••••••••"
-                                            animate={{
-                                                scale: focusedInput === 'confirmPassword' ? 1.02 : 1,
-                                            }}
-                                            transition={{ duration: 0.2 }}
-                                        />
-                                    </div>
-                                </motion.div>
-
-                                {/* Terms and conditions */}
-                                <motion.div
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ duration: 0.8, delay: 0.85 }}
-                                    className="flex items-start"
-                                >
-                                    <label className="flex items-start cursor-pointer group">
-                                        <input 
-                                            type="checkbox" 
-                                            required
-                                            className="w-4 h-4 mt-1 rounded border-white/20 bg-white/10 text-[#a60054] focus:ring-[#a60054] focus:ring-offset-0 cursor-pointer" 
-                                        />
-                                        <span className="ml-2 text-sm text-white/70 group-hover:text-white transition-colors">
-                                            I agree to the{' '}
-                                            <a href="#" className="text-[#a60054] hover:text-[#c91069] font-medium">
-                                                Terms and Conditions
-                                            </a>
-                                            {' '}and{' '}
-                                            <a href="#" className="text-[#a60054] hover:text-[#c91069] font-medium">
-                                                Privacy Policy
-                                            </a>
-                                        </span>
-                                    </label>
-                                </motion.div>
-
-                                {/* Submit button */}
-                                <motion.div
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ duration: 0.8, delay: 0.9 }}
-                                >
-                                    <motion.button
-                                        type="submit"
-                                        className="w-full py-4 bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-xl shadow-lg relative overflow-hidden group"
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
+                                <form onSubmit={handleSubmit} className="space-y-5">
+                                    {/* Full Name input */}
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ duration: 0.8, delay: 0.6 }}
                                     >
-                                        <motion.div
-                                            className="absolute inset-0 bg-gradient-to-r from-[#211f60] to-[#a60054] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                        />
-                                        <span className="relative z-10">Create Account</span>
-                                    </motion.button>
-                                </motion.div>
+                                        <label htmlFor="fullName" className="block text-sm font-medium text-white/80 mb-2">
+                                            Full Name
+                                        </label>
+                                        <div className="relative">
+                                            <motion.input
+                                                type="text"
+                                                id="fullName"
+                                                value={fullName}
+                                                onChange={(e) => setFullName(e.target.value)}
+                                                onFocus={() => setFocusedInput('fullName')}
+                                                onBlur={() => setFocusedInput(null)}
+                                                required
+                                                className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none transition-all duration-300 backdrop-blur-sm"
+                                                style={{
+                                                    borderColor: focusedInput === 'fullName' ? '#a60054' : 'rgba(255, 255, 255, 0.2)'
+                                                }}
+                                                placeholder="John Doe"
+                                                animate={{
+                                                    scale: focusedInput === 'fullName' ? 1.02 : 1,
+                                                }}
+                                                transition={{ duration: 0.2 }}
+                                            />
+                                        </div>
+                                    </motion.div>
 
-                                {/* Sign in link */}
-                                <motion.p
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ duration: 0.8, delay: 0.95 }}
-                                    className="text-center text-white/60 text-sm"
-                                >
-                                    Already have an account?{' '}
-                                    <a href="/login" className="text-[#a60054] hover:text-[#c91069] font-medium transition-colors">
-                                        Sign in
-                                    </a>
-                                </motion.p>
-                            </form>
-                        </div>
+                                    {/* Email input */}
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ duration: 0.8, delay: 0.65 }}
+                                    >
+                                        <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+                                            Email Address
+                                        </label>
+                                        <div className="relative">
+                                            <motion.input
+                                                type="email"
+                                                id="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                onFocus={() => setFocusedInput('email')}
+                                                onBlur={() => setFocusedInput(null)}
+                                                required
+                                                className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none transition-all duration-300 backdrop-blur-sm"
+                                                style={{
+                                                    borderColor: focusedInput === 'email' ? '#a60054' : 'rgba(255, 255, 255, 0.2)'
+                                                }}
+                                                placeholder="you@example.com"
+                                                animate={{
+                                                    scale: focusedInput === 'email' ? 1.02 : 1,
+                                                }}
+                                                transition={{ duration: 0.2 }}
+                                            />
+                                        </div>
+                                    </motion.div>
+
+                                    {/* Contact Number input */}
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ duration: 0.8, delay: 0.7 }}
+                                    >
+                                        <label htmlFor="contactNumber" className="block text-sm font-medium text-white/80 mb-2">
+                                            Contact Number
+                                        </label>
+                                        <div className="relative">
+                                            <motion.input
+                                                type="tel"
+                                                id="contactNumber"
+                                                value={contactNumber}
+                                                onChange={handleContactNumberChange}
+                                                onFocus={() => setFocusedInput('contactNumber')}
+                                                onBlur={() => setFocusedInput(null)}
+                                                required
+                                                pattern="\+947[0-9]{8}"
+                                                className="w-full px-4 py-3 bg-white/10 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none transition-all duration-300 backdrop-blur-sm"
+                                                style={{
+                                                    borderColor: focusedInput === 'contactNumber' ? '#a60054' : 'rgba(255, 255, 255, 0.2)'
+                                                }}
+                                                placeholder="+94712345678"
+                                                animate={{
+                                                    scale: focusedInput === 'contactNumber' ? 1.02 : 1,
+                                                }}
+                                                transition={{ duration: 0.2 }}
+                                            />
+                                        </div>
+                                    </motion.div>
+
+                                    {/* Password input */}
+                                    {/* Password input */}
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ duration: 0.8, delay: 0.75 }}
+                                    >
+                                        <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
+                                            Password
+                                        </label>
+                                        <div className="relative">
+                                            <motion.input
+                                                type={showPassword ? "text" : "password"}
+                                                id="password"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                onFocus={() => setFocusedInput('password')}
+                                                onBlur={() => setFocusedInput(null)}
+                                                required
+                                                minLength={8}
+                                                className="w-full px-4 py-3 pr-12 bg-white/10 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none transition-all duration-300 backdrop-blur-sm"
+                                                style={{
+                                                    borderColor: focusedInput === 'password' ? '#a60054' : 'rgba(255, 255, 255, 0.2)'
+                                                }}
+                                                placeholder="••••••••"
+                                                animate={{
+                                                    scale: focusedInput === 'password' ? 1.02 : 1,
+                                                }}
+                                                transition={{ duration: 0.2 }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
+                                            >
+                                                {showPassword ? (
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </motion.div>
+
+                                    {/* Confirm Password input */}
+                                    {/* Confirm Password input */}
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ duration: 0.8, delay: 0.8 }}
+                                    >
+                                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/80 mb-2">
+                                            Confirm Password
+                                        </label>
+                                        <div className="relative">
+                                            <motion.input
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                id="confirmPassword"
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                onFocus={() => setFocusedInput('confirmPassword')}
+                                                onBlur={() => setFocusedInput(null)}
+                                                required
+                                                minLength={8}
+                                                className="w-full px-4 py-3 pr-12 bg-white/10 border-2 rounded-xl text-white placeholder-white/40 focus:outline-none transition-all duration-300 backdrop-blur-sm"
+                                                style={{
+                                                    borderColor: focusedInput === 'confirmPassword' ? '#a60054' : 'rgba(255, 255, 255, 0.2)'
+                                                }}
+                                                placeholder="••••••••"
+                                                animate={{
+                                                    scale: focusedInput === 'confirmPassword' ? 1.02 : 1,
+                                                }}
+                                                transition={{ duration: 0.2 }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
+                                            >
+                                                {showConfirmPassword ? (
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </motion.div>
+
+                                    {/* Terms and conditions */}
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ duration: 0.8, delay: 0.85 }}
+                                        className="flex items-start"
+                                    >
+                                        <label className="flex items-start cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                required
+                                                className="w-4 h-4 mt-1 rounded border-white/20 bg-white/10 text-[#a60054] focus:ring-[#a60054] focus:ring-offset-0 cursor-pointer"
+                                            />
+                                            <span className="ml-2 text-sm text-white/70 group-hover:text-white transition-colors">
+                                                I agree to the{' '}
+                                                <a href="#" className="text-[#a60054] hover:text-[#c91069] font-medium">
+                                                    Terms and Conditions
+                                                </a>
+                                                {' '}and{' '}
+                                                <a href="#" className="text-[#a60054] hover:text-[#c91069] font-medium">
+                                                    Privacy Policy
+                                                </a>
+                                            </span>
+                                        </label>
+                                    </motion.div>
+
+                                    {/* Submit button */}
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ duration: 0.8, delay: 0.9 }}
+                                    >
+                                        <motion.button
+                                            type="submit"
+                                            className="w-full py-4 bg-gradient-to-r from-[#a60054] to-[#211f60] text-white font-semibold rounded-xl shadow-lg relative overflow-hidden group"
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                        >
+                                            <motion.div
+                                                className="absolute inset-0 bg-gradient-to-r from-[#211f60] to-[#a60054] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                            />
+                                            <span className="relative z-10">Create Account</span>
+                                        </motion.button>
+                                    </motion.div>
+
+                                    {/* Sign in link */}
+                                    <motion.p
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        transition={{ duration: 0.8, delay: 0.95 }}
+                                        className="text-center text-white/60 text-sm"
+                                    >
+                                        Already have an account?{' '}
+                                        <a href="/login" className="text-[#a60054] hover:text-[#c91069] font-medium transition-colors">
+                                            Sign in
+                                        </a>
+                                    </motion.p>
+                                </form>
+                            </div>
                         </div>
                     </motion.div>
                 </div>

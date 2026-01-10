@@ -18,6 +18,7 @@ interface OrderItem {
   quantity: number;
   pricePerUnit: number;
   totalPrice: number;
+  fileType: 'image' | 'pdf';
 }
 
 interface Order {
@@ -550,13 +551,21 @@ export default function Dashboard() {
                             {order.items.map((item, idx) => (
                               <div key={idx} className="flex gap-3 bg-white/5 rounded-xl p-3 border border-white/10">
                                 <div className="relative w-16 h-16 flex-shrink-0 bg-white/5 rounded-lg overflow-hidden">
-                                  <Image
-                                    src={item.imageUrl}
-                                    alt={item.fileName}
-                                    fill
-                                    className="object-cover"
-                                    sizes="64px"
-                                  />
+                                  {item.fileType === 'pdf' ? (
+                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-500/20 to-red-600/20">
+                                      <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                      </svg>
+                                    </div>
+                                  ) : (
+                                    <Image
+                                      src={item.imageUrl}
+                                      alt={item.fileName}
+                                      fill
+                                      className="object-cover"
+                                      sizes="64px"
+                                    />
+                                  )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-white text-sm font-medium truncate">{item.fileName}</p>

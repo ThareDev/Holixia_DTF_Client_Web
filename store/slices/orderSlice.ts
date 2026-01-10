@@ -1,12 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type PrintSize = 'A4' | 'A3';
+export type FileType = 'image' | 'pdf';
 
 export interface OrderItem {
   id: string;
   imagePreview: string;
   fileName: string;
   fileSize: number;
+  fileType: FileType;
   size: PrintSize;
   quantity: number;
   pricePerUnit: number;
@@ -19,8 +21,8 @@ interface OrderState {
 }
 
 export const PRICE_PER_SIZE: Record<PrintSize, number> = {
-  'A4': 200,   // LKR per print
-  'A3': 400,   // LKR per print
+  'A4': 200,
+  'A3': 400,
 };
 
 const initialState: OrderState = {
@@ -56,7 +58,6 @@ const orderSlice = createSlice({
           ...action.payload.updates,
         };
 
-        // Recalculate price if size or quantity changed
         const item = state.items[index];
         item.pricePerUnit = PRICE_PER_SIZE[item.size];
         item.totalPrice = item.pricePerUnit * item.quantity;

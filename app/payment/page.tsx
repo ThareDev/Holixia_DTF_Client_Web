@@ -129,11 +129,13 @@ export default function PaymentPage() {
       const itemsData = orderItems.map(item => ({
         fileName: item.fileName,
         fileSize: item.fileSize,
+        fileType: item.fileType, // ✅ ADD THIS LINE
         size: item.size,
         quantity: item.quantity,
         pricePerUnit: item.pricePerUnit,
         totalPrice: item.totalPrice,
       }));
+
       formData.append('items', JSON.stringify(itemsData));
 
       // ✅ Add actual image files from context
@@ -158,6 +160,7 @@ export default function PaymentPage() {
       closeAlert();
 
       if (response.ok && data.success) {
+        dispatch(clearOrder());
         dispatch(confirmOrder());
         dispatch(setPaymentInfo({
           receiptImage: receiptFile,
@@ -504,17 +507,31 @@ export default function PaymentPage() {
                 {orderItems.map((item) => (
                   <div key={item.id} className="flex gap-3 bg-white/5 rounded-xl p-3">
                     <div className="relative w-16 h-16 flex-shrink-0 bg-white/5 rounded-lg overflow-hidden">
-                      <Image
-                        src={item.imagePreview}
-                        alt={item.fileName}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
+                      {item.fileType === 'pdf' ? (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-500/10 to-red-600/10">
+                          <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <Image
+                          src={item.imagePreview}
+                          alt={item.fileName}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-medium truncate">{item.fileName}</p>
                       <p className="text-white/60 text-xs">{item.size} × {item.quantity}</p>
+                      <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${item.fileType === 'pdf'
+                          ? 'bg-red-500/20 text-red-400'
+                          : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                        {item.fileType.toUpperCase()}
+                      </span>
                       <p className="text-[#a60054] text-sm font-bold mt-1">{formatPrice(item.totalPrice)}</p>
                     </div>
                   </div>

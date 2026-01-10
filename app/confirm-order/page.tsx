@@ -28,7 +28,7 @@ export default function ConfirmationPage() {
   // Redirect if order is not complete
   useEffect(() => {
     if (!isDeliveryInfoComplete || !isPaymentInfoComplete || orderItems.length === 0) {
-      router.push('/checkout');
+      router.push('/dashboard');
       return;
     }
 

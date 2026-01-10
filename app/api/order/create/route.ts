@@ -6,7 +6,6 @@ import { uploadToR2 } from '@/lib/cloudfare/r2';
 
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate user
     const auth = authenticateToken(request);
     if (!auth) {
       return NextResponse.json(
@@ -17,10 +16,8 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
-    // Parse multipart form data
     const formData = await request.formData();
     
-    // Extract delivery info
     const deliveryInfo = {
       fullName: formData.get('deliveryInfo.fullName') as string,
       address: formData.get('deliveryInfo.address') as string,
@@ -28,7 +25,6 @@ export async function POST(request: NextRequest) {
       contact2: (formData.get('deliveryInfo.contact2') as string) || '',
     };
 
-    // Validate delivery info
     if (!deliveryInfo.fullName || !deliveryInfo.address || !deliveryInfo.contact1) {
       return NextResponse.json(
         { success: false, message: 'Delivery information is incomplete' },
@@ -36,7 +32,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract payment receipt
     const receiptFile = formData.get('paymentReceipt') as File;
     if (!receiptFile) {
       return NextResponse.json(
@@ -45,7 +40,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload receipt to R2
     const receiptBuffer = Buffer.from(await receiptFile.arrayBuffer());
     const receiptUrl = await uploadToR2(
       receiptBuffer,
@@ -53,7 +47,6 @@ export async function POST(request: NextRequest) {
       receiptFile.type
     );
 
-    // Extract order items
     const itemsJson = formData.get('items') as string;
     if (!itemsJson) {
       return NextResponse.json(
@@ -64,12 +57,20 @@ export async function POST(request: NextRequest) {
 
     const itemsData = JSON.parse(itemsJson);
     
-    // Upload all item images and build items array
     const items = await Promise.all(
       itemsData.map(async (item: Record<string, unknown>, index: number) => {
         const imageFile = formData.get(`itemImage_${index}`) as File;
         if (!imageFile) {
-          throw new Error(`Image for item ${index} is missing`);
+          throw new Error(`File for item ${index} is missing`);
+        }
+
+        // Validate file type
+        const fileType = item.fileType as 'image' | 'pdf';
+        if (fileType === 'image' && !imageFile.type.startsWith('image/')) {
+          throw new Error(`Item ${index}: Expected image file but received ${imageFile.type}`);
+        }
+        if (fileType === 'pdf' && imageFile.type !== 'application/pdf') {
+          throw new Error(`Item ${index}: Expected PDF file but received ${imageFile.type}`);
         }
 
         const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
           imageUrl,
           fileName: item.fileName as string,
           fileSize: item.fileSize as number,
+          fileType: item.fileType as 'image' | 'pdf',
           size: item.size as 'A4' | 'A3',
           quantity: item.quantity as number,
           pricePerUnit: item.pricePerUnit as number,
@@ -91,13 +93,10 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    // Calculate total amount
     const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
-    // Generate order ID
     const orderId = 'ORD-' + Date.now().toString();
 
-    // Create order
     const order = await Order.create({
       userId: auth.userId,
       orderId,
